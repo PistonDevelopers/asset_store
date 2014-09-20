@@ -1,5 +1,16 @@
-pub use iostore::IoStore;
+extern crate curl;
+
+pub use iostore::{
+    IoStore,
+    FsBackend,
+    NetBackend,
+    from_directory,
+    from_url
+};
 mod iostore;
+
+#[cfg(test)]
+mod test;
 
 pub trait AssetStore<E> {
     /// Tell the asset store to begin loading a resource.
@@ -59,5 +70,4 @@ pub trait AssetStore<E> {
     /// until it is loaded.
     fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a Vec<u8>, E>;
 }
-
 
