@@ -1,6 +1,6 @@
 # Asset Store
 
-[Api Documentation](tyoverby.com/asset_store/asset_store/index.html)
+[Api Documentation](http://tyoverby.com/asset_store/asset_store/trait.AssetStore.html)
 
 A unified method for easily reading and caching files over the filesystem
 and network.
