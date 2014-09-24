@@ -7,7 +7,9 @@ pub use iostore::{
     from_directory,
     from_url
 };
-mod iostore;
+
+pub mod multi_store;
+pub mod iostore;
 
 #[cfg(test)]
 mod test;
