@@ -56,14 +56,14 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         self.store.unload_everything();
     }
 
-    fn fetch(&mut self, path: &str) -> Result<Option<&Vec<u8>>, T> {
+    fn fetch(&mut self, path: &str) -> Result<Option<&[u8]>, T> {
         match self.store.fetch(path) {
             Ok(v) => Ok(v),
             Err(e) => Err((self.trans)(e))
         }
     }
 
-    fn fetch_block(&mut self, path: &str) -> Result<&Vec<u8>, T> {
+    fn fetch_block(&mut self, path: &str) -> Result<&[u8], T> {
         match self.store.fetch_block(path) {
             Ok(v) => Ok(v),
             Err(e) => Err((self.trans)(e))
@@ -179,14 +179,14 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
     /// If the resource is fully loaded, returns Ok(Some(resource))
     /// If the resource has not been loaded, returns Ok(None)
     /// If the resource failed to load, returns Err(e)
-    fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a Vec<u8>>, MultiStoreError<T>> {
+    fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a [u8]>, MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
         store.fetch(path).map_err(|e| WrappedError(e))
     }
 
     /// Try to fetch a resource.  If the resource has not been loaded yet, block
     /// until it is loaded.
-    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a Vec<u8>, MultiStoreError<T>> {
+    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
         store.fetch_block(path).map_err(|e| WrappedError(e))
     }

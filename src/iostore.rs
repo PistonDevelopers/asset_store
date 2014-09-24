@@ -92,22 +92,22 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
         self.mem.clear();
     }
 
-    fn fetch<'s>(&'s mut self, path: &str) -> Result<Option<&'s Vec<u8>>, IoError> {
+    fn fetch<'s>(&'s mut self, path: &str) -> Result<Option<&'s [u8]>, IoError> {
         self.update();
         match self.mem.find_equiv(&path) {
-            Some(&Ok(ref v)) => Ok(Some(v)),
+            Some(&Ok(ref v)) => Ok(Some(v.as_slice())),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)
         }
     }
 
-    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a Vec<u8>, IoError> {
+    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], IoError> {
         self.load(path);
         if self.mem.contains_key_equiv(&path) {
-            match self.fetch(path) {
-                Ok(Some(x)) => Ok(x),
-                Err(e) => Err(e),
-                Ok(None) => fail!()
+            match self.mem.find_equiv(&path) {
+                Some(&Ok(ref v)) => Ok(v.as_slice()),
+                Some(&Err(ref e)) => Err(e.clone()),
+                None => { unreachable!() }
             }
         } else {
             for obj in self.incoming.iter() {
@@ -115,7 +115,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
                 self.mem.insert(g_path.clone(), result);
                 if path == g_path.as_slice() {
                     match self.mem.find_equiv(&path) {
-                        Some(&Ok(ref x)) => return  Ok(x) ,
+                        Some(&Ok(ref x)) => return  Ok(x.as_slice()) ,
                         Some(&Err(ref e)) => return Err(e.clone()) ,
                         None => fail!()
                     }

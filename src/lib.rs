@@ -10,6 +10,7 @@ pub use iostore::{
 
 pub mod multi_store;
 pub mod iostore;
+pub mod static_store;
 
 #[cfg(test)]
 mod test;
@@ -66,10 +67,10 @@ pub trait AssetStore<E> {
     /// If the resource is fully loaded, returns Ok(Some(resource))
     /// If the resource has not been loaded, returns Ok(None)
     /// If the resource failed to load, returns Err(e)
-    fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a Vec<u8>>, E>;
+    fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a [u8]>, E>;
 
     /// Try to fetch a resource.  If the resource has not been loaded yet, block
     /// until it is loaded.
-    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a Vec<u8>, E>;
+    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], E>;
 }
 
