@@ -2,6 +2,7 @@ use std::collections::hashmap::HashMap;
 
 use super::AssetStore;
 
+#[deriving(Show)]
 pub enum MultiStoreError<E> {
     NoSplit,
     StoreNotFound(String),
@@ -100,14 +101,13 @@ impl <T> MultiStore<T> {
 }
 
 impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
-    /// Tell the asset store to begin loading a resource.
     fn load(&mut self, path: &str) {
         match self.get_store(path) {
             Ok((store, path)) => store.load(path),
             Err(_) => {}
         }
     }
-    /// Tell the asset store to begin loading all resources.
+
     fn load_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
         let mut paths = paths;
         for path in paths {
@@ -118,12 +118,11 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    /// Check to see if a resource has been loaded or not.
     fn is_loaded(&mut self, path: &str) -> Result<bool, MultiStoreError<T>>  {
         let (store, path) = try!(self.get_store(path));
         store.is_loaded(path).map_err(|e| WrappedError(e))
     }
-    /// Check to see if everything has been loaded.
+
     fn all_loaded<'a, I: Iterator<&'a str>>(&mut self, paths: I) -> Result<bool, Vec<(&'a str, MultiStoreError<T>)>> {
         let mut paths = paths;
         let mut errs = Vec::new();
@@ -150,15 +149,13 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    /// Remove this resouce from this asset store if it is loaded.
     fn unload(&mut self, path: &str) {
         match self.get_store(path) {
             Ok((store, path)) => store.unload(path),
             Err(_) => {}
         }
     }
-    /// Remove all these resouces from this asset store if they
-    /// are loaded.
+
     fn unload_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
         let mut paths = paths;
         for path in paths {
@@ -168,24 +165,18 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
             }
         }
     }
-    /// Remove every resouce from this asset store
+
     fn unload_everything(&mut self) {
         for (_, store) in self.stores.iter_mut() {
             store.unload_everything();
         }
     }
 
-    /// Try to fetch a resource.
-    /// If the resource is fully loaded, returns Ok(Some(resource))
-    /// If the resource has not been loaded, returns Ok(None)
-    /// If the resource failed to load, returns Err(e)
     fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a [u8]>, MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
         store.fetch(path).map_err(|e| WrappedError(e))
     }
 
-    /// Try to fetch a resource.  If the resource has not been loaded yet, block
-    /// until it is loaded.
     fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
         store.fetch_block(path).map_err(|e| WrappedError(e))

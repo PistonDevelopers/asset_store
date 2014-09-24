@@ -1,8 +1,10 @@
 [package]
-
 name = "asset_store"
 version = "0.0.1"
 authors = ["Ty Overby <ty@pre-alpha.com>"]
 
 [dependencies.curl]
 git = "https://github.com/carllerche/curl-rust.git"
+
+[dev-dependencies.resources_package]
+git = "https://github.com/tomaka/rust-package.git"

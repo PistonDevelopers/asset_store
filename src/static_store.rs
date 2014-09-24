@@ -1,5 +1,6 @@
 use super::AssetStore;
 
+#[deriving(Show)]
 pub enum StaticStoreError {
     NotFound(String)
 }
