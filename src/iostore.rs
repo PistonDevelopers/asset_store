@@ -25,7 +25,8 @@ pub struct IoStore<Backend> {
     awaiting: HashSet<String>
 }
 
-pub fn from_directory(path: Path) -> IoStore<FsBackend> {
+pub fn from_directory(path: &str) -> IoStore<FsBackend> {
+    let path = Path::new(path);
     let (sx, rx) = channel();
     IoStore {
         backend: FsBackend { path: path },
@@ -36,10 +37,10 @@ pub fn from_directory(path: Path) -> IoStore<FsBackend> {
     }
 }
 
-pub fn from_url(beginning: String) -> IoStore<NetBackend> {
+pub fn from_url(beginning: &str) -> IoStore<NetBackend> {
     let (sx, rx) = channel();
     IoStore {
-        backend: NetBackend { beginning: beginning },
+        backend: NetBackend { beginning: beginning.to_string() },
         mem: HashMap::new(),
         awaiting: HashSet::new(),
         incoming: rx,
@@ -149,7 +150,6 @@ impl FsBackend {
                 )
             );
         }
-        println!("here");
         (file, File::open(&base).read_to_end())
     }
 }

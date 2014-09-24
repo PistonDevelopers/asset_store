@@ -1,14 +1,18 @@
 use super::AssetStore;
 
-enum StaticStoreError {
+pub enum StaticStoreError {
     NotFound(String)
 }
 
-struct StaticStore {
+pub struct StaticStore {
     mem: &'static [(&'static [u8], &'static [u8])]
 }
 
 impl StaticStore {
+    pub fn new(m: &'static [(&'static [u8], &'static [u8])]) -> StaticStore {
+        StaticStore{ mem: m }
+    }
+
     fn find(&self, path: &str) -> Option<&[u8]> {
         let found =
             self.mem.iter()

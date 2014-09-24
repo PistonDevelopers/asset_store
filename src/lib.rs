@@ -5,12 +5,23 @@ pub use iostore::{
     FsBackend,
     NetBackend,
     from_directory,
-    from_url
+    from_url,
 };
 
-pub mod multi_store;
-pub mod iostore;
-pub mod static_store;
+pub use multi_store::{
+    MultiStore,
+    MultiStoreError,
+};
+
+pub use static_store::{
+    StaticStore,
+    StaticStoreError
+};
+
+
+mod multi_store;
+mod iostore;
+mod static_store;
 
 #[cfg(test)]
 mod test;
