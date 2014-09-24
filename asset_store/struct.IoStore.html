@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `IoStore` struct in crate `asset_store`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, IoStore">
+
+    <title>asset_store::IoStore - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='index.html'>asset_store</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.FsBackend.html'>FsBackend</a><a class='struct current' href='struct.IoStore.html'>IoStore</a><a class='struct ' href='struct.MultiStore.html'>MultiStore</a><a class='struct ' href='struct.NetBackend.html'>NetBackend</a><a class='struct ' href='struct.StaticStore.html'>StaticStore</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.AssetStore.html'>AssetStore</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.from_directory.html'>from_directory</a><a class='fn ' href='fn.from_url.html'>from_url</a></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><div class='in-band'>Struct <a href='index.html'>asset_store</a>::<wbr><a class='struct' href=''>IoStore</a><wbr></div><div class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-1191' href='../src/asset_store/Users/tyoverby/workspace/rust/asset_store/src/iostore.rs.html#20-26'>[src]</a></div></h1>
+<pre class='rust struct'>pub struct IoStore&lt;Backend&gt; {
+    // some fields omitted
+}</pre><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;B: IoBackend&gt; <a class='trait' href='../asset_store/trait.AssetStore.html' title='asset_store::AssetStore'>AssetStore</a>&lt;<a class='struct' href='http://doc.rust-lang.org/master/std/io/struct.IoError.html' title='std::io::IoError'>IoError</a>&gt; for <a class='struct' href='../asset_store/struct.IoStore.html' title='asset_store::IoStore'>IoStore</a>&lt;B&gt;</code></h3><div class='impl-methods'><h4 id='method.load' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.load' class='fnname'>load</a>(&amp;mut self, path: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>)</code></h4>
+<h4 id='method.is_loaded' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.is_loaded' class='fnname'>is_loaded</a>(&amp;mut self, path: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/master/std/primitive.bool.html'>bool</a>, <a class='struct' href='http://doc.rust-lang.org/master/std/io/struct.IoError.html' title='std::io::IoError'>IoError</a>&gt;</code></h4>
+<h4 id='method.unload' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.unload' class='fnname'>unload</a>(&amp;mut self, path: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>)</code></h4>
+<h4 id='method.unload_everything' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.unload_everything' class='fnname'>unload_everything</a>(&amp;mut self)</code></h4>
+<h4 id='method.fetch' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.fetch' class='fnname'>fetch</a>&lt;'s&gt;(&amp;'s mut self, path: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a class='type' href='http://doc.rust-lang.org/master/core/option/type.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'s <a href='http://doc.rust-lang.org/master/std/primitive.slice.html'>[<a href='http://doc.rust-lang.org/master/std/primitive.u8.html'>u8</a>]</a>&gt;, <a class='struct' href='http://doc.rust-lang.org/master/std/io/struct.IoError.html' title='std::io::IoError'>IoError</a>&gt;</code></h4>
+<h4 id='method.fetch_block' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.fetch_block' class='fnname'>fetch_block</a>&lt;'a&gt;(&amp;'a mut self, path: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/master/std/primitive.slice.html'>[<a href='http://doc.rust-lang.org/master/std/primitive.u8.html'>u8</a>]</a>, <a class='struct' href='http://doc.rust-lang.org/master/std/io/struct.IoError.html' title='std::io::IoError'>IoError</a>&gt;</code></h4>
+<h4 id='method.load_all' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.load_all' class='fnname'>load_all</a>&lt;'a, I: <a class='trait' href='http://doc.rust-lang.org/master/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>&gt;&gt;(&amp;mut self, paths: I)</code></h4>
+<h4 id='method.all_loaded' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.all_loaded' class='fnname'>all_loaded</a>&lt;'a, I: <a class='trait' href='http://doc.rust-lang.org/master/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>&gt;&gt;(&amp;mut self, paths: I) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/master/std/primitive.bool.html'>bool</a>, <a class='struct' href='http://doc.rust-lang.org/master/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/master/std/primitive.tuple.html'>(&amp;'a <a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>, E)</a>&gt;&gt;</code></h4>
+<h4 id='method.unload_all' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.unload_all' class='fnname'>unload_all</a>&lt;'a, I: <a class='trait' href='http://doc.rust-lang.org/master/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/master/std/primitive.str.html'>str</a>&gt;&gt;(&amp;mut self, paths: I)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "asset_store";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>
