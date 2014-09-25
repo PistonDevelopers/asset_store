@@ -5,6 +5,9 @@
 A unified method for easily reading and caching files over the filesystem
 and network.
 
+Native dependencies:
+* libcurl3-dev
+
 Calls to `load()` process asynchronously, so it is possible to load files
 from different sources in parallel.
 
