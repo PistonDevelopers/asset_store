@@ -17,7 +17,7 @@ impl StaticStore {
     fn find(&self, path: &str) -> Option<&[u8]> {
         let found =
             self.mem.iter()
-                    .filter(|&&(s, _)| s == path.as_bytes())
+                    .filter(|&&(s, _)| Path::new(s).ends_with_path(&Path::new(path)))
                     .nth(0);
         match found {
             Some(&(_, bytes)) => Some(bytes),
