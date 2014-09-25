@@ -103,7 +103,6 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
     }
 
     fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], IoError> {
-        self.load(path);
         if self.mem.contains_key_equiv(&path) {
             match self.mem.find_equiv(&path) {
                 Some(&Ok(ref v)) => Ok(v.as_slice()),
@@ -111,6 +110,9 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
                 None => { unreachable!() }
             }
         } else {
+            if !self.awaiting.contains_equiv(&path) {
+                self.load(path);
+            }
             for obj in self.incoming.iter() {
                 let (g_path, result) = obj;
                 self.mem.insert(g_path.clone(), result);
