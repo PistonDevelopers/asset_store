@@ -21,19 +21,19 @@ impl <E, T, B: AssetStore<E>> StoreWrapper<B, E, T> {
 }
 
 impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
-    fn load(&mut self, path: &str) {
+    fn load(&self, path: &str) {
         self.store.load(path);
     }
 
-    fn load_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
+    fn load_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
         self.store.load_all(paths);
     }
 
-    fn is_loaded(&mut self, path: &str) -> Result<bool, T> {
+    fn is_loaded(&self, path: &str) -> Result<bool, T> {
         self.store.is_loaded(path).map_err(|e| (self.trans)(e))
     }
 
-    fn all_loaded<'a, I: Iterator<&'a str>>(&mut self, paths: I) -> Result<bool, Vec<(&'a str, T)>> {
+    fn all_loaded<'a, I: Iterator<&'a str>>(&self, paths: I) -> Result<bool, Vec<(&'a str, T)>> {
         let res = self.store.all_loaded(paths);
         match res {
             Ok(b) => Ok(b),
@@ -45,30 +45,24 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         }
     }
 
-    fn unload(&mut self, path: &str) {
+    fn unload(&self, path: &str) {
         self.store.unload(path);
     }
 
-    fn unload_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
+    fn unload_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
         self.store.unload_all(paths);
     }
 
-    fn unload_everything(&mut self) {
+    fn unload_everything(&self) {
         self.store.unload_everything();
     }
 
-    fn fetch(&mut self, path: &str) -> Result<Option<&[u8]>, T> {
-        match self.store.fetch(path) {
-            Ok(v) => Ok(v),
-            Err(e) => Err((self.trans)(e))
-        }
+    fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<Option<O>, T> {
+        self.store.map_resource(path, mapfn).map_err(|x| (self.trans)(x))
     }
 
-    fn fetch_block(&mut self, path: &str) -> Result<&[u8], T> {
-        match self.store.fetch_block(path) {
-            Ok(v) => Ok(v),
-            Err(e) => Err((self.trans)(e))
-        }
+    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<O, T> {
+        self.store.map_resource_block(path, mapfn).map_err(|x| (self.trans)(x))
     }
 }
 
@@ -86,14 +80,14 @@ impl <T> MultiStore<T> {
         self.stores.insert(prefix.to_string(), box wrapped);
     }
 
-    fn get_store<'a>(&mut self, path: &'a str) ->
-    Result<(&mut Box<AssetStore<T> + 'static>, &'a str), MultiStoreError<T>> {
+    fn get_store<'a>(&self, path: &'a str) ->
+    Result<(&Box<AssetStore<T> + 'static>, &'a str), MultiStoreError<T>> {
         let split: Vec<&str> = path.splitn(1, ':').collect();
         if split.len() == 1 {
             return Err(NoSplit)
         }
         let (before, after) = (split[0], split[1]);
-        match self.stores.find_mut(&before.to_string()) {
+        match self.stores.find(&before.to_string()) {
             Some(x) => Ok((x, after)),
             None => Err(StoreNotFound(before.to_string()))
         }
@@ -101,14 +95,14 @@ impl <T> MultiStore<T> {
 }
 
 impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
-    fn load(&mut self, path: &str) {
+    fn load(&self, path: &str) {
         match self.get_store(path) {
             Ok((store, path)) => store.load(path),
             Err(_) => {}
         }
     }
 
-    fn load_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
+    fn load_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
         let mut paths = paths;
         for path in paths {
             match self.get_store(path) {
@@ -118,12 +112,12 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn is_loaded(&mut self, path: &str) -> Result<bool, MultiStoreError<T>>  {
+    fn is_loaded(&self, path: &str) -> Result<bool, MultiStoreError<T>>  {
         let (store, path) = try!(self.get_store(path));
         store.is_loaded(path).map_err(|e| WrappedError(e))
     }
 
-    fn all_loaded<'a, I: Iterator<&'a str>>(&mut self, paths: I) -> Result<bool, Vec<(&'a str, MultiStoreError<T>)>> {
+    fn all_loaded<'a, I: Iterator<&'a str>>(&self, paths: I) -> Result<bool, Vec<(&'a str, MultiStoreError<T>)>> {
         let mut paths = paths;
         let mut errs = Vec::new();
         let mut loaded = true;
@@ -149,14 +143,14 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn unload(&mut self, path: &str) {
+    fn unload(&self, path: &str) {
         match self.get_store(path) {
             Ok((store, path)) => store.unload(path),
             Err(_) => {}
         }
     }
 
-    fn unload_all<'a, I: Iterator<&'a str>>(&mut self, paths: I) {
+    fn unload_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
         let mut paths = paths;
         for path in paths {
             match self.get_store(path) {
@@ -166,19 +160,38 @@ impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn unload_everything(&mut self) {
-        for (_, store) in self.stores.iter_mut() {
+    fn unload_everything(&self) {
+        for (_, store) in self.stores.iter() {
             store.unload_everything();
         }
     }
 
-    fn fetch<'a>(&'a mut self , path: &str) -> Result<Option<&'a [u8]>, MultiStoreError<T>> {
+    fn map_resource<O>(&self , path: &str, mapfn: |&[u8]| -> O) ->
+    Result<Option<O>, MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
-        store.fetch(path).map_err(|e| WrappedError(e))
+        let mut ret = None;
+        let out = store.with_bytes(path, |bytes| {
+            ret = Some(mapfn(bytes));
+        });
+        match (out, ret) {
+            (Ok(Some(_)), Some(x)) => Ok(Some(x)),
+            (Ok(None), _) => Ok(None),
+            (Err(e), _) => Err(WrappedError(e)),
+            (Ok(Some(())), None) => unreachable!()
+        }
     }
 
-    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], MultiStoreError<T>> {
+    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
+    Result<O, MultiStoreError<T>> {
         let (store, path) = try!(self.get_store(path));
-        store.fetch_block(path).map_err(|e| WrappedError(e))
+        let mut ret = None;
+        let out = store.with_bytes_block(path, |bytes| {
+            ret = Some(mapfn(bytes));
+        });
+        match (out, ret) {
+            (_, Some(x)) => Ok(x),
+            (Err(e), _) => Err(WrappedError(e)),
+            (Ok(_), None) => unreachable!()
+        }
     }
 }

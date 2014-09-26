@@ -27,28 +27,28 @@ impl StaticStore {
 }
 
 impl AssetStore<StaticStoreError> for StaticStore {
-    fn load(&mut self, _: &str) { }
+    fn load(&self, _: &str) { }
 
-    fn is_loaded(&mut self, path: &str) -> Result<bool, StaticStoreError> {
+    fn is_loaded(&self, path: &str) -> Result<bool, StaticStoreError> {
         Ok(self.find(path).is_some())
     }
 
-    fn unload(&mut self, _: &str) { }
+    fn unload(&self, _: &str) { }
 
-    fn unload_everything(&mut self) { }
+    fn unload_everything(&self) { }
 
-    fn fetch<'s>(&'s mut self, path: &str) -> Result<Option<&'s [u8]>,
-StaticStoreError> {
+    fn map_resource<O>(&self , path: &str, mapfn: |&[u8]| -> O) -> Result<Option<O>, StaticStoreError> {
         match self.find(path) {
-            Some(x) => Ok(Some(x)),
+            Some(x) => Ok(Some(mapfn(x))),
             None => Err(NotFound(path.to_string()))
         }
     }
 
-    fn fetch_block<'s>(&'s mut self, path: &str) -> Result<&'s [u8], StaticStoreError> {
-        match self.find(path) {
-            Some(x) => Ok(x),
-            None => Err(NotFound(path.to_string()))
+    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<O, StaticStoreError> {
+        match self.map_resource(path, mapfn) {
+            Ok(Some(x)) => Ok(x),
+            Ok(None) => unreachable!(),
+            Err(x) => Err(x)
         }
     }
 }

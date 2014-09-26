@@ -1,130 +1,90 @@
-use std::collections::hashmap::HashMap;
-use std::collections::hashmap::HashSet;
-use std::io::IoError;
-use std::io::OtherIoError;
-use std::io::PermissionDenied;
-use std::io::IoResult;
-use std::io::File;
-
-use std::comm::Empty;
-use std::comm::Disconnected;
+use std::collections::hashmap::{HashMap};
+use std::io::{IoError, OtherIoError, PermissionDenied, IoResult, File};
+use std::io::timer::sleep;
+use std::time::duration::Duration;
+use std::sync::{Arc, RWLock};
 
 use curl::http;
 
 use super::AssetStore;
 
+type DistMap = Arc<RWLock<HashMap<String, IoResult<Vec<u8>>>>>;
 pub trait IoBackend {
-    fn go_get(&self, path: &str, how_return: Sender<(String, IoResult<Vec<u8>>)>);
+    fn go_get(&self, path: &str, mem: DistMap);
 }
 
 pub struct IoStore<Backend> {
     backend: Backend,
-    mem: HashMap<String, IoResult<Vec<u8>>>,
-    incoming: Receiver<(String, IoResult<Vec<u8>>)>,
-    sender: Sender<(String, IoResult<Vec<u8>>)>,
-    awaiting: HashSet<String>
+    mem: DistMap,
+    //awaiting: HashSet<String>
 }
 
 pub fn from_directory(path: &str) -> IoStore<FsBackend> {
     let path = Path::new(path);
-    let (sx, rx) = channel();
     IoStore {
         backend: FsBackend { path: path },
-        mem: HashMap::new(),
-        awaiting: HashSet::new(),
-        incoming: rx,
-        sender: sx
+        mem: Arc::new(RWLock::new(HashMap::new())),
+        //awaiting: HashSet::new(),
     }
 }
 
 pub fn from_url(beginning: &str) -> IoStore<NetBackend> {
-    let (sx, rx) = channel();
     IoStore {
         backend: NetBackend { beginning: beginning.to_string() },
-        mem: HashMap::new(),
-        awaiting: HashSet::new(),
-        incoming: rx,
-        sender: sx
-    }
-}
-
-impl<B: IoBackend> IoStore<B> {
-    fn update(&mut self) {
-        loop {
-            let upd = match self.incoming.try_recv() {
-                Ok(value) => value,
-                Err(Empty) => { break; }
-                Err(Disconnected) => {
-                    break;
-                }
-            };
-            let (path, result) = upd;
-            self.mem.insert(path, result);
-        }
+        mem: Arc::new(RWLock::new(HashMap::new())),
+        //awaiting: HashSet::new(),
     }
 }
 
 impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
-    fn load(&mut self, path: &str) {
-        self.update();
-        // Don't load something that we are currently waiting on.
-        if !self.awaiting.contains_equiv(&path) {
-            self.backend.go_get(path, self.sender.clone());
-        }
-        self.awaiting.insert(path.to_string());
+    fn load(&self, path: &str) {
+        //if !self.awaiting.contains_equiv(&path) {
+            self.backend.go_get(path, self.mem.clone());
+        //}
+        //self.awaiting.insert(path.to_string());
     }
 
-    fn is_loaded(&mut self, path: &str) -> Result<bool, IoError> {
-        self.update();
-        match self.mem.find_equiv(&path) {
+    fn is_loaded(&self, path: &str) -> Result<bool, IoError> {
+        let mem = self.mem.read();
+        match mem.find_equiv(&path) {
             Some(&Ok(_)) => Ok(true),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(false)
         }
     }
 
-    fn unload(&mut self, path: &str) {
-        self.update();
-        self.mem.pop_equiv(&path);
+    fn unload(&self, path: &str) {
+        let mut mem = self.mem.write();
+        mem.pop_equiv(&path);
     }
 
-    fn unload_everything(&mut self) {
-        self.update();
-        self.mem.clear();
+    fn unload_everything(&self) {
+        let mut mem = self.mem.write();
+        mem.clear();
     }
 
-    fn fetch<'s>(&'s mut self, path: &str) -> Result<Option<&'s [u8]>, IoError> {
-        self.update();
-        match self.mem.find_equiv(&path) {
-            Some(&Ok(ref v)) => Ok(Some(v.as_slice())),
+    fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
+    IoResult<Option<O>> {
+        let mem = self.mem.read();
+        match mem.find_equiv(&path) {
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)
         }
     }
 
-    fn fetch_block<'a>(&'a mut self, path: &str) -> Result<&'a [u8], IoError> {
-        if self.mem.contains_key_equiv(&path) {
-            match self.mem.find_equiv(&path) {
-                Some(&Ok(ref v)) => Ok(v.as_slice()),
-                Some(&Err(ref e)) => Err(e.clone()),
-                None => { unreachable!() }
-            }
-        } else {
-            if !self.awaiting.contains_equiv(&path) {
-                self.load(path);
-            }
-            for obj in self.incoming.iter() {
-                let (g_path, result) = obj;
-                self.mem.insert(g_path.clone(), result);
-                if path == g_path.as_slice() {
-                    match self.mem.find_equiv(&path) {
-                        Some(&Ok(ref x)) => return  Ok(x.as_slice()) ,
-                        Some(&Err(ref e)) => return Err(e.clone()) ,
-                        None => fail!()
-                    }
+    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O)
+    -> IoResult<O> {
+        self.load(path);
+        loop {
+            {
+                return match self.map_resource(path, |x| mapfn(x)) {
+                    Ok(Some(v)) => Ok(v),
+                    Err(e) => Err(e),
+                    Ok(None) => { continue; }
                 }
             }
-            fail!()
+            sleep(Duration::milliseconds(0));
         }
     }
 }
@@ -157,11 +117,13 @@ impl FsBackend {
 }
 
 impl IoBackend for FsBackend {
-    fn go_get(&self, file: &str, ret: Sender<(String, IoResult<Vec<u8>>)>) {
+    fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
         spawn(proc() {
-            let _ = ret.send_opt(FsBackend::process(path, file));
+            let (file, bytes) = FsBackend::process(path, file);
+            let mut mem = mem.write();
+            mem.insert(file, bytes);
         });
     }
 }
@@ -171,7 +133,7 @@ pub struct NetBackend {
 }
 
 impl IoBackend for NetBackend {
-    fn go_get(&self, file: &str, ret: Sender<(String, IoResult<Vec<u8>>)>) {
+    fn go_get(&self, file: &str, mem: DistMap) {
         let mut path = self.beginning.clone();
         path.push_str(file);
         let file = file.to_string();
@@ -179,16 +141,19 @@ impl IoBackend for NetBackend {
             let resp = match http::handle().get(path.as_slice()).exec() {
                 Ok(b) => b.move_body(),
                 Err(err) => {
-                    let _ = ret.send_opt((file, Err(IoError {
+                    let error = Err(IoError {
                         kind: OtherIoError,
                         desc: "Error fetching file over http",
                         detail: Some(format!("for file {}: {}", path, err))
-                    })));
+                    });
+                    let mut map = mem.write();
+                    map.insert(file, error);
                     return;
                 }
             };
 
-            let _ = ret.send_opt((file, Ok(resp)));
+            let mut map = mem.write();
+            map.insert(file, Ok(resp));
         });
     }
 }
