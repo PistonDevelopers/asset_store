@@ -1,4 +1,5 @@
 extern crate curl;
+extern crate resources_package_package;
 
 pub use iostore::{
     IoStore,
