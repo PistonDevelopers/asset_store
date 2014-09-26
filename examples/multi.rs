@@ -7,6 +7,10 @@ use asset_store::MultiStore;
 
 fn id<A>(a:A) -> A { a }
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 fn main() {
     // Create a file store for the local file system
     let file_store = from_directory("./examples/");
@@ -22,11 +26,11 @@ fn main() {
     combo.load("web:robots.txt");
 
     {
-        let robots = combo.fetch_block("web:robots.txt");
-        println!("{}", String::from_utf8_lossy(robots.unwrap()));
+        let robots = combo.map_resource_block("web:robots.txt", to_string);
+        println!("{}", robots.unwrap());
     } {
-        let multi = combo.fetch_block("file:multi.rs");
-        println!("{}", String::from_utf8_lossy(multi.unwrap()));
+        let multi = combo.map_resource_block("file:multi.rs", to_string);
+        println!("{}", multi.unwrap());
     }
-}
 
+}

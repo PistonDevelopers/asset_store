@@ -7,6 +7,10 @@ extern crate asset_store;
 use asset_store::StaticStore;
 use asset_store::AssetStore;
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 // Store all .rs files in the examples directory in the
 // binary during compilation
 static package: &'static [(&'static [u8], &'static [u8])] =
@@ -17,9 +21,9 @@ static package: &'static [(&'static [u8], &'static [u8])] =
 
 fn main() {
     // Use an in memory store.
-    let mut store = StaticStore::new(package);
+    let store = StaticStore::new(package);
 
     // Load the file right out of memory.
-    let stat = store.fetch_block("static_resources.rs");
-    println!("{}", String::from_utf8_lossy(stat.unwrap()));
+    let stat = store.map_resource_block("static_resources.rs", to_string);
+    println!("{}", stat.unwrap());
 }
