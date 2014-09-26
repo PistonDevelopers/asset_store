@@ -22,16 +22,20 @@ extern crate asset_store;
 use asset_store::from_directory;
 use asset_store::AssetStore;
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 fn main() {
     // Make a new asset store from this examples directory.
-    let mut store = from_directory("./examples/");
+    let store = from_directory("./examples/");
     // Asynchronously load this file.
     store.load("basic_file.rs");
 
     // Block until the file is loaded.
-    let bytes = store.fetch_block("basic_file.rs");
+    let contents = store.map_resource_block("basic_file.rs", to_string);
     // Print the bytes of the file.
-    println!("{}", String::from_utf8_lossy(bytes.unwrap()));
+    println!("{}", contents);
 }
 
 ```
@@ -46,16 +50,20 @@ extern crate asset_store;
 use asset_store::from_url;
 use asset_store::AssetStore;
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 fn main() {
     // Make a new asset store with google as the root
-    let mut store = from_url("http://www.google.com/");
+    let store = from_url("http://www.google.com/");
     // Asynchronously load this file.
     store.load("basic_file.rs");
 
     // Block until the file is loaded.
-    let bytes = store.fetch_block("robots.txt");
+    let contents = store.map_resource_block("robots.txt", to_string);
     // Print the bytes of the file.
-    println!("{}", String::from_utf8_lossy(bytes.unwrap()));
+    println!("{}", contents.unwrap());
 }
 
 ```
@@ -75,6 +83,10 @@ extern crate asset_store;
 use asset_store::StaticStore;
 use asset_store::AssetStore;
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 // Store all .rs files in the examples directory in the
 // binary during compilation
 static package: &'static [(&'static [u8], &'static [u8])] =
@@ -85,11 +97,11 @@ static package: &'static [(&'static [u8], &'static [u8])] =
 
 fn main() {
     // Use an in memory store.
-    let mut store = StaticStore::new(package);
+    let store = StaticStore::new(package);
 
     // Load the file right out of memory.
-    let stat = store.fetch_block("static_resources.rs");
-    println!("{}", String::from_utf8_lossy(stat.unwrap()));
+    let stat = store.map_resource_block("static_resources.rs", to_string);
+    println!("{}", stat.unwrap());
 }
 
 ```
@@ -110,6 +122,10 @@ use asset_store::MultiStore;
 
 fn id<A>(a:A) -> A { a }
 
+pub fn to_string(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).into_string()
+}
+
 fn main() {
     // Create a file store for the local file system
     let file_store = from_directory("./examples/");
@@ -125,13 +141,13 @@ fn main() {
     combo.load("web:robots.txt");
 
     {
-        let robots = combo.fetch_block("web:robots.txt");
-        println!("{}", String::from_utf8_lossy(robots.unwrap()));
+        let robots = combo.map_resource_block("web:robots.txt", to_string);
+        println!("{}", robots.unwrap());
     } {
-        let multi = combo.fetch_block("file:multi.rs");
-        println!("{}", String::from_utf8_lossy(multi.unwrap()));
+        let multi = combo.map_resource_block("file:multi.rs", to_string);
+        println!("{}", multi.unwrap());
     }
-}
 
+}
 
 ```
