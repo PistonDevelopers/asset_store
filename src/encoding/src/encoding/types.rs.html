@@ -965,7 +965,7 @@
     <span class='doccomment'>/// Calls given function to handle decoder errors.</span>
     <span class='doccomment'>/// The function is given the current decoder, input and output writer,</span>
     <span class='doccomment'>/// and should return true only when it is fine to keep going.</span>
-    <span class='attribute'>#[<span class='ident'>unstable</span>]</span> <span class='ident'>DecoderTrap</span>(<span class='ident'>DecoderTrapFunc</span>),
+    <span class='attribute'>#[<span class='ident'>unstable</span>]</span> <span class='ident'>DecoderCall</span>(<span class='ident'>DecoderTrapFunc</span>),
 }
 
 <span class='kw'>impl</span> <span class='ident'>DecoderTrap</span> {
@@ -976,7 +976,7 @@
             <span class='ident'>DecodeStrict</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
             <span class='ident'>DecodeReplace</span> <span class='op'>=&gt;</span> { <span class='ident'>output</span>.<span class='ident'>write_char</span>(<span class='string'>&#39;\ufffd&#39;</span>); <span class='boolval'>true</span> },
             <span class='ident'>DecodeIgnore</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            <span class='ident'>DecoderTrap</span>(<span class='ident'>func</span>) <span class='op'>=&gt;</span> <span class='ident'>func</span>(<span class='ident'>decoder</span>, <span class='ident'>input</span>, <span class='ident'>output</span>),
+            <span class='ident'>DecoderCall</span>(<span class='ident'>func</span>) <span class='op'>=&gt;</span> <span class='ident'>func</span>(<span class='ident'>decoder</span>, <span class='ident'>input</span>, <span class='ident'>output</span>),
         }
     }
 }
@@ -999,7 +999,7 @@
     <span class='doccomment'>/// Calls given function to handle encoder errors.</span>
     <span class='doccomment'>/// The function is given the current encoder, input and output writer,</span>
     <span class='doccomment'>/// and should return true only when it is fine to keep going.</span>
-    <span class='attribute'>#[<span class='ident'>unstable</span>]</span> <span class='ident'>EncoderTrap</span>(<span class='ident'>EncoderTrapFunc</span>),
+    <span class='attribute'>#[<span class='ident'>unstable</span>]</span> <span class='ident'>EncoderCall</span>(<span class='ident'>EncoderTrapFunc</span>),
 }
 
 <span class='kw'>impl</span> <span class='ident'>EncoderTrap</span> {
@@ -1030,7 +1030,7 @@
                 }
                 <span class='ident'>reencode</span>(<span class='ident'>encoder</span>, <span class='ident'>escapes</span>.<span class='ident'>as_slice</span>(), <span class='ident'>output</span>, <span class='string'>&quot;NcrEscape&quot;</span>)
             },
-            <span class='ident'>EncoderTrap</span>(<span class='ident'>func</span>) <span class='op'>=&gt;</span> <span class='ident'>func</span>(<span class='ident'>encoder</span>, <span class='ident'>input</span>, <span class='ident'>output</span>),
+            <span class='ident'>EncoderCall</span>(<span class='ident'>func</span>) <span class='op'>=&gt;</span> <span class='ident'>func</span>(<span class='ident'>encoder</span>, <span class='ident'>input</span>, <span class='ident'>output</span>),
         }
     }
 }

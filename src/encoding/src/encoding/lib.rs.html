@@ -318,6 +318,7 @@
 <span id='276'>276</span>
 <span id='277'>277</span>
 <span id='278'>278</span>
+<span id='279'>279</span>
 </pre><pre class='rust '>
 <span class='comment'>// This is a part of rust-encoding.</span>
 <span class='comment'>// Copyright (c) 2013-2014, Kang Seonghoon.</span>
@@ -384,7 +385,7 @@ assert_eq!(ISO_8859_6.decode([65,99,109,101,169], DecodeIgnore),
 A practical example of custom encoder traps:
 
 ~~~~ {.rust}
-use encoding::{Encoding, Encoder, ByteWriter, EncoderTrap, DecodeStrict};
+use encoding::{Encoding, Encoder, ByteWriter, EncoderTrap, EncoderCall, DecodeStrict};
 use encoding::all::ASCII;
 
 // hexadecimal numeric character reference replacement
@@ -395,7 +396,7 @@ fn hex_ncr_escape(_encoder: &amp;mut Encoder, input: &amp;str, output: &amp;mut 
     output.write_bytes(escapes.as_bytes());
     true
 }
-static HexNcrEscape: EncoderTrap = EncoderTrap(hex_ncr_escape);
+static HexNcrEscape: EncoderTrap = EncoderCall(hex_ncr_escape);
 
 let orig = &quot;Hello, 世界!&quot;.to_string();
 let encoded = ASCII.encode(orig.as_slice(), HexNcrEscape).unwrap();
@@ -428,7 +429,7 @@ There are three main entry points to rust-encoding.
 
 **`Encoding`** is a single character encoding.
 It contains `encode` and `decode` methods for converting `String` to `Vec&lt;u8&gt;` and vice versa.
-For the error handling, they receive **traps** (`EncoderTrap` and `DecoderTrap` respectively)
+For the error handling, they receive **traps** (`EncoderCall` and `DecoderCall` respectively)
 which replace any error with some string (e.g. `U+FFFD`) or sequence (e.g. `?`).
 You can also use `EncodeStrict` and `DecodeStrict` traps to stop on an error.
 
@@ -509,7 +510,8 @@ Whenever in doubt, look at the source code and specifications for detailed expla
                       <span class='ident'>EncoderTrapFunc</span>, <span class='ident'>DecoderTrapFunc</span>, <span class='ident'>DecoderTrap</span>,
                       <span class='ident'>DecodeStrict</span>, <span class='ident'>DecodeReplace</span>, <span class='ident'>DecodeIgnore</span>,
                       <span class='ident'>EncoderTrap</span>, <span class='ident'>EncodeStrict</span>, <span class='ident'>EncodeReplace</span>,
-                      <span class='ident'>EncodeIgnore</span>, <span class='ident'>EncodeNcrEscape</span>, <span class='ident'>decode</span>}; <span class='comment'>// reexport</span>
+                      <span class='ident'>EncodeIgnore</span>, <span class='ident'>EncodeNcrEscape</span>, <span class='ident'>decode</span>,
+                      <span class='ident'>EncoderCall</span>, <span class='ident'>DecoderCall</span>}; <span class='comment'>// reexport</span>
 
 <span class='kw'>mod</span> <span class='ident'>util</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span> <span class='kw'>mod</span> <span class='ident'>testutils</span>;
