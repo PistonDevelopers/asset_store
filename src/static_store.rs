@@ -1,3 +1,4 @@
+use resources_package_package::Package;
 use super::AssetStore;
 
 #[deriving(Show)]
@@ -6,21 +7,18 @@ pub enum StaticStoreError {
 }
 
 pub struct StaticStore {
-    mem: &'static [(&'static [u8], &'static [u8])]
+    mem: &'static Package,
 }
 
 impl StaticStore {
-    pub fn new(m: &'static [(&'static [u8], &'static [u8])]) -> StaticStore {
+    pub fn new(m: &'static Package) -> StaticStore {
         StaticStore{ mem: m }
     }
 
     fn find(&self, path: &str) -> Option<&[u8]> {
-        let found =
-            self.mem.iter()
-                    .filter(|&&(s, _)| s == path.as_bytes())
-                    .nth(0);
-        match found {
-            Some(&(_, bytes)) => Some(bytes),
+        // this match is necessary in order to avoid a compilation error
+        match self.mem.find(&Path::new(path)) {
+            Some(val) => Some(val),
             None => None
         }
     }
