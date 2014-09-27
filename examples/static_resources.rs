@@ -2,7 +2,10 @@
 
 #[phase(plugin)]
 extern crate resources_package;
+extern crate resources_package_package;
 extern crate asset_store;
+
+use resources_package_package::Package;
 
 use asset_store::StaticStore;
 use asset_store::AssetStore;
@@ -13,15 +16,15 @@ pub fn to_string(bytes: &[u8]) -> String {
 
 // Store all .rs files in the examples directory in the
 // binary during compilation
-static package: &'static [(&'static [u8], &'static [u8])] =
+static package: Package =
     resources_package!([
-        "./*.rs"
+        "./"
     ]
 );
 
 fn main() {
     // Use an in memory store.
-    let store = StaticStore::new(package);
+    let store = StaticStore::new(&package);
 
     // Load the file right out of memory.
     let stat = store.map_resource_block("static_resources.rs", to_string);
