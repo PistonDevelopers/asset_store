@@ -92,7 +92,7 @@ pub trait AssetStore<E> {
     Result<O, E>;
 
     /// Similar to map_resource, the user provides a path and a
-    /// funciton.  The function is run only if the file is loaded
+    /// function.  The function is run only if the file is loaded
     /// without error.  The return value of the provided function
     /// is ignored, and a status is returned in the format given by
     /// map_resource, but with the uint `()` value in place of
