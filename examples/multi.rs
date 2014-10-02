@@ -7,7 +7,7 @@ use asset_store::MultiStore;
 
 fn id<A>(a:A) -> A { a }
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 

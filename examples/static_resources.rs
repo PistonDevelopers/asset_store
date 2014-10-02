@@ -10,7 +10,7 @@ use resources_package_package::Package;
 use asset_store::StaticStore;
 use asset_store::AssetStore;
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 

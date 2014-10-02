@@ -3,7 +3,7 @@ extern crate asset_store;
 use asset_store::from_directory;
 use asset_store::AssetStore;
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 
