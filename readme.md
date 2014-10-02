@@ -22,7 +22,7 @@ extern crate asset_store;
 use asset_store::from_directory;
 use asset_store::AssetStore;
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 
@@ -50,7 +50,7 @@ extern crate asset_store;
 use asset_store::from_url;
 use asset_store::AssetStore;
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 
@@ -86,7 +86,7 @@ use resources_package_package::Package;
 use asset_store::StaticStore;
 use asset_store::AssetStore;
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 
@@ -125,7 +125,7 @@ use asset_store::MultiStore;
 
 fn id<A>(a:A) -> A { a }
 
-pub fn to_string(bytes: &[u8]) -> String {
+fn to_string(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_string()
 }
 
