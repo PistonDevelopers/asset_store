@@ -4,7 +4,8 @@ use std::io::timer::sleep;
 use std::time::duration::Duration;
 use std::sync::{Arc, RWLock};
 
-use curl::http;
+use hyper::Url;
+use hyper::client::{Request, Response};
 
 use super::AssetStore;
 
@@ -28,9 +29,9 @@ pub fn from_directory(path: &str) -> IoStore<FsBackend> {
     }
 }
 
-pub fn from_url(beginning: &str) -> IoStore<NetBackend> {
+pub fn from_url(base: &str) -> IoStore<NetBackend> {
     IoStore {
-        backend: NetBackend { beginning: beginning.to_string() },
+        backend: NetBackend { base: base.to_string() },
         mem: Arc::new(RWLock::new(HashMap::new())),
         //awaiting: HashSet::new(),
     }
@@ -129,17 +130,40 @@ impl IoBackend for FsBackend {
 }
 
 pub struct NetBackend {
-    beginning: String
+    base: String
+}
+
+impl NetBackend {
+    fn http_get(path: &String) -> Result<Response, String> {
+        let url = match Url::parse(path.as_slice()) {
+            Ok(url) => url,
+            Err(parse_err) => return Err(
+                format!("Error parsing url: {}", parse_err)
+            ),
+        };
+
+        let request = Request::get(url).unwrap();
+        let stream = match request.start() {
+            Ok(stream) => stream,
+            Err(err) => return Err(
+                format!("Error starting request stream: {}", err)
+            )
+        };
+
+        match stream.send() {
+            Ok(response) => Ok(response),
+            Err(err) => Err(format!("Error sending request: {}", err))
+        }
+    }
 }
 
 impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
-        let mut path = self.beginning.clone();
-        path.push_str(file);
+        let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
         spawn(proc() {
-            let resp = match http::handle().get(path.as_slice()).exec() {
-                Ok(b) => b.move_body(),
+            let mut res = match NetBackend::http_get(&path) {
+                Ok(res) => res,
                 Err(err) => {
                     let error = Err(IoError {
                         kind: OtherIoError,
@@ -152,8 +176,18 @@ impl IoBackend for NetBackend {
                 }
             };
 
-            let mut map = mem.write();
-            map.insert(file, Ok(resp));
+            if res.status == ::hyper::status::Ok {
+                let mut map = mem.write();
+                map.insert(file, res.read_to_end());
+            } else {
+                let error = Err(IoError {
+                        kind: OtherIoError,
+                        desc: "Error fetching file over http",
+                        detail: Some(format!("for file {}: {}", path, res.status))
+                });
+                let mut map = mem.write();
+                map.insert(file, error);
+            }
         });
     }
 }

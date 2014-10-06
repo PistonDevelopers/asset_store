@@ -1,6 +1,7 @@
 
 use super::{
     from_directory,
+    from_url,
     AssetStore,
 };
 
@@ -11,6 +12,14 @@ fn test_load() {
     let store = from_directory("./src/");
     store.load("test.rs");
     let loaded = store.map_resource_block("test.rs", |x| to_unit(x));
+    assert!(loaded.is_ok());
+}
+
+#[test]
+fn test_load_web() {
+    let store = from_url("http://www.google.com/");
+    store.load("robots.txt");
+    let loaded = store.map_resource_block("robots.txt", |x| to_unit(x));
     assert!(loaded.is_ok());
 }
 
@@ -37,8 +46,25 @@ fn test_load_fail() {
 }
 
 #[test]
+fn test_load_web_fail() {
+    let store = from_url("http://www.google.com/");
+    store.load("foo.rs");
+    let loaded = store.map_resource_block("foo.rs", |x| to_unit(x));
+    assert!(loaded.is_err());
+}
+
+#[test]
 fn test_load_same() {
     let store = from_directory("./src/");
+    store.load("foo.rs");
+    store.load("foo.rs");
+    let loaded = store.map_resource_block("foo.rs", |x| to_unit(x));
+    assert!(loaded.is_err());
+}
+
+#[test]
+fn test_load_web_same() {
+    let store = from_url("http://www.google.com/");
     store.load("foo.rs");
     store.load("foo.rs");
     let loaded = store.map_resource_block("foo.rs", |x| to_unit(x));
@@ -52,6 +78,20 @@ fn test_fetch_regular() {
     // woooo, busy loop!
     loop {
         match store.map_resource("lib.rs", |x| to_unit(x)) {
+            Ok(Some(_)) => { break; }
+            Ok(None) => { continue; }
+            Err(_) => { assert!(false) }
+        }
+    }
+}
+
+#[test]
+fn test_fetch_web_regular() {
+    let store = from_url("http://www.google.com/");
+    store.load("robots.txt");
+
+    loop {
+        match store.map_resource("robots.txt", |x| to_unit(x)) {
             Ok(Some(_)) => { break; }
             Ok(None) => { continue; }
             Err(_) => { assert!(false) }
