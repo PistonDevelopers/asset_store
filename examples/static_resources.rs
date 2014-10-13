@@ -16,7 +16,7 @@ fn to_string(bytes: &[u8]) -> String {
 
 // Store all .rs files in the examples directory in the
 // binary during compilation
-static package: Package =
+static PACKAGE: Package =
     resources_package!([
         "./"
     ]
@@ -24,7 +24,7 @@ static package: Package =
 
 fn main() {
     // Use an in memory store.
-    let store = StaticStore::new(&package);
+    let store = StaticStore::new(&PACKAGE);
 
     // Load the file right out of memory.
     let stat = store.map_resource_block("static_resources.rs", to_string);
