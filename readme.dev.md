@@ -1,12 +1,9 @@
-# Asset Store
+# Asset Store [![Build Status](https://travis-ci.org/PistonDevelopers/asset_store.svg?branch=master)](https://travis-ci.org/PistonDevelopers/asset_store)
 
 [Api Documentation](http://tyoverby.com/asset_store/asset_store/trait.AssetStore.html)
 
 A unified method for easily reading and caching files over the filesystem
 and network.
-
-Native dependencies:
-* libcurl3-dev
 
 Calls to `load()` process asynchronously, so it is possible to load files
 from different sources in parallel.
