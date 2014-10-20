@@ -70,12 +70,17 @@ pub struct MultiStore<T> {
     stores: HashMap<String, Box<AssetStore<T> + 'static>>
 }
 
-impl <T> MultiStore<T> {
+impl<T: 'static> MultiStore<T> {
     pub fn new() -> MultiStore<T> {
         MultiStore { stores: HashMap::new() }
     }
 
-    pub fn add<E, S: AssetStore<E>>(&mut self, prefix: &str, store: S, tr: fn(E) -> T) {
+    pub fn add<E, S: 'static + AssetStore<E>>(
+        &mut self, 
+        prefix: &str, 
+        store: S, 
+        tr: fn(E) -> T
+    ) {
         let wrapped = StoreWrapper::new(store, tr);
         self.stores.insert(prefix.to_string(), box wrapped);
     }
@@ -94,7 +99,7 @@ impl <T> MultiStore<T> {
     }
 }
 
-impl <T> AssetStore<MultiStoreError<T>> for MultiStore<T> {
+impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
     fn load(&self, path: &str) {
         match self.get_store(path) {
             Ok((store, path)) => store.load(path),
