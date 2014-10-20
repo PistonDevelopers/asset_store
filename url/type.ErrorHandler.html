@@ -41,11 +41,11 @@
     </nav>
 
     <section id='main' class="content type">
-<h1 class='fqn'><div class='in-band'><a href='index.html'>url</a>::<wbr><a class='type' href=''>ErrorHandler</a><wbr></div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'><a href='index.html'>url</a>::<wbr><a class='type' href=''>ErrorHandler</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-2409' href='../src/url/home/ty/.cargo/git/checkouts/rust-url-1e22af4233079a1e/master/src/parser.rs.html#95'>[src]</a></div></h1>
-<pre class='rust typedef'>type ErrorHandler = fn(reason: <a class='enum' href='../url/enum.ParseError.html' title='url::ParseError'>ParseError</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a href='http://doc.rust-lang.org/master/std/primitive.unit.html'>()</a>&gt;;</pre><div class='docblock'><p>This is called on non-fatal parse errors.</p>
+        </span><a id='src-2409' href='../src/url/home/ty/.cargo/git/checkouts/rust-url-1e22af4233079a1e/master/src/parser.rs.html#95'>[src]</a></span></h1>
+<pre class='rust typedef'>type ErrorHandler = fn(reason: <a class='enum' href='../url/enum.ParseError.html' title='url::ParseError'>ParseError</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.unit.html'>()</a>&gt;;</pre><div class='docblock'><p>This is called on non-fatal parse errors.</p>
 
 <p>The handler can choose to continue or abort parsing by returning Ok() or Err(), respectively.
 See the <code>UrlParser::error_handler</code> method.</p>

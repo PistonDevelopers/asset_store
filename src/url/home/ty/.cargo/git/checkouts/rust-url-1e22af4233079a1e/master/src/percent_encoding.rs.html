@@ -331,9 +331,9 @@
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>from_hex</span>(<span class='ident'>byte</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
     <span class='kw'>match</span> <span class='ident'>byte</span> {
-        <span class='string'>b&#39;0&#39;</span> .. <span class='string'>b&#39;9&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;0&#39;</span>),  <span class='comment'>// 0..9</span>
-        <span class='string'>b&#39;A&#39;</span> .. <span class='string'>b&#39;F&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;A&#39;</span>),  <span class='comment'>// A..F</span>
-        <span class='string'>b&#39;a&#39;</span> .. <span class='string'>b&#39;f&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;a&#39;</span>),  <span class='comment'>// a..f</span>
+        <span class='string'>b&#39;0&#39;</span> ... <span class='string'>b&#39;9&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;0&#39;</span>),  <span class='comment'>// 0..9</span>
+        <span class='string'>b&#39;A&#39;</span> ... <span class='string'>b&#39;F&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;A&#39;</span>),  <span class='comment'>// A..F</span>
+        <span class='string'>b&#39;a&#39;</span> ... <span class='string'>b&#39;f&#39;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>byte</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;a&#39;</span>),  <span class='comment'>// a..f</span>
         _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>
     }
 }

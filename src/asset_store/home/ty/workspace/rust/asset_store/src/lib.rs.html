@@ -150,8 +150,10 @@
 <span id='108'>108</span>
 <span id='109'>109</span>
 <span id='110'>110</span>
+<span id='111'>111</span>
 </pre><pre class='rust '>
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>curl</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>hyper</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>resources_package_package</span>;
 
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>iostore</span>::{
     <span class='ident'>IoStore</span>,
@@ -244,7 +246,7 @@
     <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>O</span>, <span class='ident'>E</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// Similar to map_resource, the user provides a path and a</span>
-    <span class='doccomment'>/// funciton.  The function is run only if the file is loaded</span>
+    <span class='doccomment'>/// function.  The function is run only if the file is loaded</span>
     <span class='doccomment'>/// without error.  The return value of the provided function</span>
     <span class='doccomment'>/// is ignored, and a status is returned in the format given by</span>
     <span class='doccomment'>/// map_resource, but with the uint `()` value in place of</span>

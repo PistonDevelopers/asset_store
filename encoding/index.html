@@ -41,10 +41,10 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Crate <a class='mod' href=''>encoding</a><wbr></div><div class='out-of-band'><a href='stability.html'>[stability]</a> <span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>encoding</a><wbr></span><span class='out-of-band'><a href='stability.html'>[stability]</a> <span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-0' href='../src/encoding/src/encoding/lib.rs.html#5-278'>[src]</a></div></h1>
+        </span><a id='src-0' href='../src/encoding/home/ty/.cargo/git/checkouts/rust-encoding-aceee0e55a114022/master/src/lib.rs.html#5-278'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id="rust-encoding" class='section-header'><a
                            href="#rust-encoding">Rust-encoding</a></h1>
@@ -111,7 +111,7 @@ and also provides an advanced interface for error detection and recovery.</p>
     <span class='ident'>output</span>.<span class='ident'>write_bytes</span>(<span class='ident'>escapes</span>.<span class='ident'>as_bytes</span>());
     <span class='boolval'>true</span>
 }
-<span class='kw'>static</span> <span class='ident'>HexNcrEscape</span>: <span class='ident'>EncoderTrap</span> <span class='op'>=</span> <span class='ident'>EncoderCall</span>(<span class='ident'>hex_ncr_escape</span>);
+<span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>non_uppercase_statics</span>)]</span> <span class='kw'>static</span> <span class='ident'>HexNcrEscape</span>: <span class='ident'>EncoderTrap</span> <span class='op'>=</span> <span class='ident'>EncoderCall</span>(<span class='ident'>hex_ncr_escape</span>);
 
 <span class='kw'>let</span> <span class='ident'>orig</span> <span class='op'>=</span> <span class='string'>&quot;Hello, 世界!&quot;</span>.<span class='ident'>to_string</span>();
 <span class='kw'>let</span> <span class='ident'>encoded</span> <span class='op'>=</span> <span class='ident'>ASCII</span>.<span class='ident'>encode</span>(<span class='ident'>orig</span>.<span class='ident'>as_slice</span>(), <span class='ident'>HexNcrEscape</span>).<span class='ident'>unwrap</span>();
