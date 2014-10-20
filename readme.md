@@ -1,4 +1,4 @@
-# Asset Store
+# Asset Store [![Build Status](https://travis-ci.org/PistonDevelopers/asset_store.svg?branch=master)](https://travis-ci.org/PistonDevelopers/asset_store)
 
 [Api Documentation](http://tyoverby.com/asset_store/asset_store/trait.AssetStore.html)
 
