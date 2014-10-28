@@ -35,3 +35,8 @@ by combining them into one and using prefixes you can access many
 file stores of different types.
 
 ^code(examples/multi.rs)
+
+## Dependencies
+
+![dependencies](./Cargo.png)
+
