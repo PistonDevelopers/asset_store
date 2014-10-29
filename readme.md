@@ -151,3 +151,8 @@ fn main() {
 }
 
 ```
+
+## Dependencies
+
+![dependencies](./Cargo.png)
+
