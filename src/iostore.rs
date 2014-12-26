@@ -48,7 +48,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
 
     fn is_loaded(&self, path: &str) -> Result<bool, IoError> {
         let mem = self.mem.read();
-        match mem.find_equiv(&path) {
+        match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(false)
@@ -57,7 +57,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
 
     fn unload(&self, path: &str) {
         let mut mem = self.mem.write();
-        mem.pop_equiv(&path);
+        mem.remove(path);
     }
 
     fn unload_everything(&self) {
@@ -68,7 +68,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
     fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
     IoResult<Option<O>> {
         let mem = self.mem.read();
-        match mem.find_equiv(&path) {
+        match mem.get(path) {
             Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)

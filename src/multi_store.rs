@@ -93,7 +93,7 @@ impl<T: 'static> MultiStore<T> {
             return Err(NoSplit)
         }
         let (before, after) = (split[0], split[1]);
-        match self.stores.find(&before.to_string()) {
+        match self.stores.get(&before.to_string()) {
             Some(x) => Ok((x, after)),
             None => Err(StoreNotFound(before.to_string()))
         }
