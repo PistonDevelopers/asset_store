@@ -6,6 +6,7 @@ pub enum StaticStoreError {
     NotFound(String)
 }
 
+#[deriving(Copy)]
 pub struct StaticStore {
     mem: &'static Package,
 }
@@ -38,7 +39,7 @@ impl AssetStore<StaticStoreError> for StaticStore {
     fn map_resource<O>(&self , path: &str, mapfn: |&[u8]| -> O) -> Result<Option<O>, StaticStoreError> {
         match self.find(path) {
             Some(x) => Ok(Some(mapfn(x))),
-            None => Err(NotFound(path.to_string()))
+            None => Err(StaticStoreError::NotFound(path.to_string()))
         }
     }
 

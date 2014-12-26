@@ -1,11 +1,14 @@
-use std::collections::hashmap::{HashMap};
+use std::collections::HashMap;
 use std::io::{IoError, OtherIoError, PermissionDenied, IoResult, File};
 use std::io::timer::sleep;
 use std::time::duration::Duration;
 use std::sync::{Arc, RWLock};
+use std::thread::Thread;
 
 use hyper::Url;
-use hyper::client::{Request, Response};
+use hyper::client::Response;
+use hyper::Client;
+use hyper::status::StatusCode;
 
 use super::AssetStore;
 
@@ -47,7 +50,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
 
     fn is_loaded(&self, path: &str) -> Result<bool, IoError> {
         let mem = self.mem.read();
-        match mem.find_equiv(&path) {
+        match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(false)
@@ -56,7 +59,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
 
     fn unload(&self, path: &str) {
         let mut mem = self.mem.write();
-        mem.pop_equiv(&path);
+        mem.remove(path);
     }
 
     fn unload_everything(&self) {
@@ -67,7 +70,7 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
     fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
     IoResult<Option<O>> {
         let mem = self.mem.read();
-        match mem.find_equiv(&path) {
+        match mem.get(path) {
             Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)
@@ -121,11 +124,11 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        spawn(proc() {
+        Thread::spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
             let mut mem = mem.write();
             mem.insert(file, bytes);
-        });
+        }).detach();
     }
 }
 
@@ -142,18 +145,10 @@ impl NetBackend {
             ),
         };
 
-        let request = Request::get(url).unwrap();
-        let stream = match request.start() {
-            Ok(stream) => stream,
-            Err(err) => return Err(
-                format!("Error starting request stream: {}", err)
-            )
-        };
+        let mut client = Client::new();
+        let request = client.get(url);
 
-        match stream.send() {
-            Ok(response) => Ok(response),
-            Err(err) => Err(format!("Error sending request: {}", err))
-        }
+        request.send().map_err(|e| e.to_string())
     }
 }
 
@@ -161,7 +156,7 @@ impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
-        spawn(proc() {
+        Thread::spawn(move || {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
@@ -176,7 +171,7 @@ impl IoBackend for NetBackend {
                 }
             };
 
-            if res.status == ::hyper::status::Ok {
+            if res.status == StatusCode::Ok {
                 let mut map = mem.write();
                 map.insert(file, res.read_to_end());
             } else {
@@ -188,6 +183,6 @@ impl IoBackend for NetBackend {
                 let mut map = mem.write();
                 map.insert(file, error);
             }
-        });
+        }).detach();
     }
 }
