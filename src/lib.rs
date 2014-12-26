@@ -1,3 +1,5 @@
+#![feature(globs)]
+
 extern crate hyper;
 extern crate resources_package_package;
 

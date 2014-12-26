@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::AssetStore;
+pub use self::MultiStoreError::*;
 
 #[deriving(Show)]
 pub enum MultiStoreError<E> {
