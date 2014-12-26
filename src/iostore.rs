@@ -3,6 +3,7 @@ use std::io::{IoError, OtherIoError, PermissionDenied, IoResult, File};
 use std::io::timer::sleep;
 use std::time::duration::Duration;
 use std::sync::{Arc, RWLock};
+use std::thread::Thread;
 
 use hyper::Url;
 use hyper::client::Response;
@@ -123,11 +124,11 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        spawn(move || {
+        Thread::spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
             let mut mem = mem.write();
             mem.insert(file, bytes);
-        });
+        }).detach();
     }
 }
 
@@ -155,7 +156,7 @@ impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
-        spawn(move || {
+        Thread::spawn(move || {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
@@ -182,6 +183,6 @@ impl IoBackend for NetBackend {
                 let mut map = mem.write();
                 map.insert(file, error);
             }
-        });
+        }).detach();
     }
 }
