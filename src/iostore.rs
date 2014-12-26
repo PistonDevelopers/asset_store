@@ -1,4 +1,4 @@
-use std::collections::hashmap::{HashMap};
+use std::collections::HashMap;
 use std::io::{IoError, OtherIoError, PermissionDenied, IoResult, File};
 use std::io::timer::sleep;
 use std::time::duration::Duration;
