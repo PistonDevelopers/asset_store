@@ -6,6 +6,7 @@ use std::sync::{Arc, RWLock};
 
 use hyper::Url;
 use hyper::client::{Request, Response};
+use hyper::status::StatusCode;
 
 use super::AssetStore;
 
@@ -176,7 +177,7 @@ impl IoBackend for NetBackend {
                 }
             };
 
-            if res.status == ::hyper::status::Ok {
+            if res.status == StatusCode::Ok {
                 let mut map = mem.write();
                 map.insert(file, res.read_to_end());
             } else {
