@@ -5,7 +5,8 @@ use std::time::duration::Duration;
 use std::sync::{Arc, RWLock};
 
 use hyper::Url;
-use hyper::client::{Request, Response};
+use hyper::client::Response;
+use hyper::Client;
 use hyper::status::StatusCode;
 
 use super::AssetStore;
@@ -143,18 +144,10 @@ impl NetBackend {
             ),
         };
 
-        let request = Request::get(url).unwrap();
-        let stream = match request.start() {
-            Ok(stream) => stream,
-            Err(err) => return Err(
-                format!("Error starting request stream: {}", err)
-            )
-        };
+        let mut client = Client::new();
+        let request = client.get(url);
 
-        match stream.send() {
-            Ok(response) => Ok(response),
-            Err(err) => Err(format!("Error sending request: {}", err))
-        }
+        request.send().map_err(|e| e.to_string())
     }
 }
 
