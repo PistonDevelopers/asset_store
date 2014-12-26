@@ -121,7 +121,7 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        spawn(proc() {
+        spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
             let mut mem = mem.write();
             mem.insert(file, bytes);
@@ -161,7 +161,7 @@ impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
-        spawn(proc() {
+        spawn(move || {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
