@@ -6,6 +6,7 @@ pub enum StaticStoreError {
     NotFound(String)
 }
 
+#[deriving(Copy)]
 pub struct StaticStore {
     mem: &'static Package,
 }
