@@ -5,10 +5,11 @@ use std::time::duration::Duration;
 use std::sync::{Arc, RWLock};
 use std::thread::Thread;
 
-use hyper::Url;
-use hyper::client::Response;
-use hyper::Client;
-use hyper::status::StatusCode;
+// use hyper::Url;
+// use hyper::client::Response;
+// use hyper::Client;
+// use hyper::status::StatusCode;
+
 
 use super::AssetStore;
 
@@ -132,57 +133,57 @@ impl IoBackend for FsBackend {
     }
 }
 
-pub struct NetBackend {
-    base: String
-}
+// pub struct NetBackend {
+//     base: String
+// }
 
-impl NetBackend {
-    fn http_get(path: &String) -> Result<Response, String> {
-        let url = match Url::parse(path.as_slice()) {
-            Ok(url) => url,
-            Err(parse_err) => return Err(
-                format!("Error parsing url: {}", parse_err)
-            ),
-        };
+// impl NetBackend {
+//     fn http_get(path: &String) -> Result<Response, String> {
+//         let url = match Url::parse(path.as_slice()) {
+//             Ok(url) => url,
+//             Err(parse_err) => return Err(
+//                 format!("Error parsing url: {}", parse_err)
+//             ),
+//         };
 
-        let mut client = Client::new();
-        let request = client.get(url);
+//         let mut client = Client::new();
+//         let request = client.get(url);
 
-        request.send().map_err(|e| e.to_string())
-    }
-}
+//         request.send().map_err(|e| e.to_string())
+//     }
+// }
 
-impl IoBackend for NetBackend {
-    fn go_get(&self, file: &str, mem: DistMap) {
-        let path = vec![self.base.clone(), file.to_string()].concat();
-        let file = file.to_string();
-        Thread::spawn(move || {
-            let mut res = match NetBackend::http_get(&path) {
-                Ok(res) => res,
-                Err(err) => {
-                    let error = Err(IoError {
-                        kind: OtherIoError,
-                        desc: "Error fetching file over http",
-                        detail: Some(format!("for file {}: {}", path, err))
-                    });
-                    let mut map = mem.write();
-                    map.insert(file, error);
-                    return;
-                }
-            };
+// impl IoBackend for NetBackend {
+//     fn go_get(&self, file: &str, mem: DistMap) {
+//         let path = vec![self.base.clone(), file.to_string()].concat();
+//         let file = file.to_string();
+//         Thread::spawn(move || {
+//             let mut res = match NetBackend::http_get(&path) {
+//                 Ok(res) => res,
+//                 Err(err) => {
+//                     let error = Err(IoError {
+//                         kind: OtherIoError,
+//                         desc: "Error fetching file over http",
+//                         detail: Some(format!("for file {}: {}", path, err))
+//                     });
+//                     let mut map = mem.write();
+//                     map.insert(file, error);
+//                     return;
+//                 }
+//             };
 
-            if res.status == StatusCode::Ok {
-                let mut map = mem.write();
-                map.insert(file, res.read_to_end());
-            } else {
-                let error = Err(IoError {
-                        kind: OtherIoError,
-                        desc: "Error fetching file over http",
-                        detail: Some(format!("for file {}: {}", path, res.status))
-                });
-                let mut map = mem.write();
-                map.insert(file, error);
-            }
-        }).detach();
-    }
-}
+//             if res.status == StatusCode::Ok {
+//                 let mut map = mem.write();
+//                 map.insert(file, res.read_to_end());
+//             } else {
+//                 let error = Err(IoError {
+//                         kind: OtherIoError,
+//                         desc: "Error fetching file over http",
+//                         detail: Some(format!("for file {}: {}", path, res.status))
+//                 });
+//                 let mut map = mem.write();
+//                 map.insert(file, error);
+//             }
+//         }).detach();
+//     }
+// }

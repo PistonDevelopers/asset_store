@@ -77,9 +77,9 @@ impl<T: 'static> MultiStore<T> {
     }
 
     pub fn add<E, S: 'static + AssetStore<E>>(
-        &mut self, 
-        prefix: &str, 
-        store: S, 
+        &mut self,
+        prefix: &str,
+        store: S,
         tr: fn(E) -> T
     ) {
         let wrapped = StoreWrapper::new(store, tr);

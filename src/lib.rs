@@ -1,12 +1,12 @@
 #![feature(globs)]
 
-extern crate hyper;
-extern crate resources_package_package;
+//extern crate hyper;
+//extern crate resources_package_package;
 
 pub use iostore::{
     IoStore,
     FsBackend,
-    NetBackend,
+    //NetBackend,
     from_directory,
     from_url,
 };

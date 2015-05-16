@@ -3,8 +3,4 @@ name = "asset_store"
 version = "0.0.1"
 authors = ["Ty Overby <ty@pre-alpha.com>"]
 
-[dependencies.hyper]
-git = "https://github.com/hyperium/hyper.git"
-
-[dependencies.resources_package]
-git = "https://github.com/tomaka/rust-package.git"
+[dependencies]
