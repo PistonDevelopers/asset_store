@@ -1,9 +1,15 @@
 use std::collections::HashMap;
-use std::io::{IoError, OtherIoError, PermissionDenied, IoResult, File};
-use std::io::timer::sleep;
-use std::time::duration::Duration;
-use std::sync::{Arc, RWLock};
-use std::thread::Thread;
+use std::convert::From;
+use std::error::Error;
+use std::io::ErrorKind;
+use std::fs::File;
+use std::path::{self, Path, PathBuf};
+use std::string::String;
+use std::sync::{Arc, RwLock};
+use std::thread::{self, spawn, sleep_ms};
+
+use std::io::Error as IoError;
+use std::io::Result as IoResult;
 
 // use hyper::Url;
 // use hyper::client::Response;
@@ -13,7 +19,7 @@ use std::thread::Thread;
 
 use super::AssetStore;
 
-type DistMap = Arc<RWLock<HashMap<String, IoResult<Vec<u8>>>>>;
+type DistMap = Arc<RwLock<HashMap<String, IoResult<Vec<u8>>>>>;
 pub trait IoBackend {
     fn go_get(&self, path: &str, mem: DistMap);
 }
@@ -25,18 +31,10 @@ pub struct IoStore<Backend> {
 }
 
 pub fn from_directory(path: &str) -> IoStore<FsBackend> {
-    let path = Path::new(path);
+    let path = PathBuf::from(String::from(path));
     IoStore {
         backend: FsBackend { path: path },
-        mem: Arc::new(RWLock::new(HashMap::new())),
-        //awaiting: HashSet::new(),
-    }
-}
-
-pub fn from_url(base: &str) -> IoStore<NetBackend> {
-    IoStore {
-        backend: NetBackend { base: base.to_string() },
-        mem: Arc::new(RWLock::new(HashMap::new())),
+        mem: Arc::new(RwLock::new(HashMap::new())),
         //awaiting: HashSet::new(),
     }
 }
@@ -50,36 +48,50 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
     }
 
     fn is_loaded(&self, path: &str) -> Result<bool, IoError> {
-        let mem = self.mem.read();
+        let mem = match self.mem.read() {
+            Ok(mem) => { mem },
+            Err(_) => { return Err(IoError::new(ErrorKind::Other, "Poisoned")); }
+        };
+
         match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
-            Some(&Err(ref e)) => Err(e.clone()),
+            Some(&Err(ref e)) => Err(IoError::new(e.kind(), e.description().clone())),
             None => Ok(false)
         }
+        // Ok(true)
     }
 
     fn unload(&self, path: &str) {
-        let mut mem = self.mem.write();
-        mem.remove(path);
+        match self.mem.write() {
+            Ok(mut mem) => { mem.remove(path); },
+            Err(_) => { }
+        }
     }
 
     fn unload_everything(&self) {
-        let mut mem = self.mem.write();
-        mem.clear();
+        match self.mem.write() {
+            Ok(mut mem) => { mem.clear(); },
+            Err(_) => { }
+        }
     }
 
-    fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
-    IoResult<Option<O>> {
-        let mem = self.mem.read();
+    fn map_resource<O, F>(&self , path: &str, mapfn: F) ->
+    IoResult<Option<O>> where F: Fn(&[u8]) -> O {
+
+        let mem = match self.mem.read() {
+            Ok(mem) => { mem },
+            Err(_) => { return Err(IoError::new(ErrorKind::Other, "Poisoned")); }
+        };
+
         match mem.get(path) {
-            Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
-            Some(&Err(ref e)) => Err(e.clone()),
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v[..]))),
+            Some(&Err(ref e)) => Err(IoError::new(e.kind(), e.description().clone())),
             None => Ok(None)
         }
     }
 
-    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O)
-    -> IoResult<O> {
+    fn map_resource_block<O, F>(&self , path: &str, mapfn: F) ->
+    IoResult<O> where F: Fn(&[u8]) -> O {
         self.load(path);
         loop {
             {
@@ -89,35 +101,51 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
                     Ok(None) => { continue; }
                 }
             }
-            sleep(Duration::milliseconds(0));
+            //sleep(Duration::milliseconds(0));
+            sleep_ms(0);
         }
     }
 }
 
 pub struct FsBackend {
-    path: Path,
+    path: PathBuf,
 }
 
 impl FsBackend {
-    fn process(path: Path, file: String) -> (String, IoResult<Vec<u8>>) {
-        let mut base = path.clone();
-        base.push(file.clone());
+    fn process<P: AsRef<Path>>(path: P, filen: String) -> (String, IoResult<Vec<u8>>) {
+        use std::fs::PathExt;
+        use std::io::Read;
 
-        if !path.is_ancestor_of(&base) {
-            let detail = format!("{} is not a child of {}",
-                                 base.display(), path.display());
+        let mut base = path.as_ref().to_path_buf();
+        base.push(filen.clone());
+
+        // is the path valid?
+        if !base.exists() {
             return (
-                file,
+                filen.clone(),
                 Err(
-                    IoError {
-                        kind: PermissionDenied,
-                        desc: "Attempt to escape filestore sandbox",
-                        detail: Some(detail)
-                    }
+                    IoError::new(
+                        ErrorKind::NotFound,
+                        format!("Given path does not exist: {} does not contain {}", match path.as_ref().to_str() {
+                            Some(s) => { s },
+                            None => { "{Bad Path}"}
+                        }, filen)
+                    )
                 )
             );
         }
-        (file, File::open(&base).read_to_end())
+
+        let mut file = File::open(&base);
+        match file {
+            Ok(mut f) => {
+                let mut buf: Vec<u8> = Vec::new();
+                match f.read_to_end(&mut buf) {
+                    Ok(_) => { (filen, Ok(buf)) }
+                    Err(e) => { (filen, Err(e)) }
+                }
+            },
+            Err(e) => { (filen, Err(e)) }
+        }
     }
 }
 
@@ -125,65 +153,74 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        Thread::spawn(move || {
+        thread::spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
-            let mut mem = mem.write();
-            mem.insert(file, bytes);
-        }).detach();
+            if let Ok(mut mem) = mem.write() {
+                mem.insert(file, bytes);
+            };
+        });
     }
 }
 
-// pub struct NetBackend {
-//     base: String
-// }
-
-// impl NetBackend {
-//     fn http_get(path: &String) -> Result<Response, String> {
-//         let url = match Url::parse(path.as_slice()) {
-//             Ok(url) => url,
-//             Err(parse_err) => return Err(
-//                 format!("Error parsing url: {}", parse_err)
-//             ),
-//         };
-
-//         let mut client = Client::new();
-//         let request = client.get(url);
-
-//         request.send().map_err(|e| e.to_string())
+// pub fn from_url(base: &str) -> IoStore<NetBackend> {
+//     IoStore {
+//         backend: NetBackend { base: base.to_string() },
+//         mem: Arc::new(RwLock::new(HashMap::new())),
+//         //awaiting: HashSet::new(),
 //     }
 // }
 
-// impl IoBackend for NetBackend {
-//     fn go_get(&self, file: &str, mem: DistMap) {
-//         let path = vec![self.base.clone(), file.to_string()].concat();
-//         let file = file.to_string();
-//         Thread::spawn(move || {
-//             let mut res = match NetBackend::http_get(&path) {
-//                 Ok(res) => res,
-//                 Err(err) => {
-//                     let error = Err(IoError {
-//                         kind: OtherIoError,
-//                         desc: "Error fetching file over http",
-//                         detail: Some(format!("for file {}: {}", path, err))
-//                     });
-//                     let mut map = mem.write();
-//                     map.insert(file, error);
-//                     return;
-//                 }
-//             };
+// // pub struct NetBackend {
+// //     base: String
+// // }
 
-//             if res.status == StatusCode::Ok {
-//                 let mut map = mem.write();
-//                 map.insert(file, res.read_to_end());
-//             } else {
-//                 let error = Err(IoError {
-//                         kind: OtherIoError,
-//                         desc: "Error fetching file over http",
-//                         detail: Some(format!("for file {}: {}", path, res.status))
-//                 });
-//                 let mut map = mem.write();
-//                 map.insert(file, error);
-//             }
-//         }).detach();
-//     }
-// }
+// // impl NetBackend {
+// //     fn http_get(path: &String) -> Result<Response, String> {
+// //         let url = match Url::parse(path.as_slice()) {
+// //             Ok(url) => url,
+// //             Err(parse_err) => return Err(
+// //                 format!("Error parsing url: {}", parse_err)
+// //             ),
+// //         };
+
+// //         let mut client = Client::new();
+// //         let request = client.get(url);
+
+// //         request.send().map_err(|e| e.to_string())
+// //     }
+// // }
+
+// // impl IoBackend for NetBackend {
+// //     fn go_get(&self, file: &str, mem: DistMap) {
+// //         let path = vec![self.base.clone(), file.to_string()].concat();
+// //         let file = file.to_string();
+// //         Thread::spawn(move || {
+// //             let mut res = match NetBackend::http_get(&path) {
+// //                 Ok(res) => res,
+// //                 Err(err) => {
+// //                     let error = Err(IoError {
+// //                         kind: OtherIoError,
+// //                         desc: "Error fetching file over http",
+// //                         detail: Some(format!("for file {}: {}", path, err))
+// //                     });
+// //                     let mut map = mem.write();
+// //                     map.insert(file, error);
+// //                     return;
+// //                 }
+// //             };
+
+// //             if res.status == StatusCode::Ok {
+// //                 let mut map = mem.write();
+// //                 map.insert(file, res.read_to_end());
+// //             } else {
+// //                 let error = Err(IoError {
+// //                         kind: OtherIoError,
+// //                         desc: "Error fetching file over http",
+// //                         detail: Some(format!("for file {}: {}", path, res.status))
+// //                 });
+// //                 let mut map = mem.write();
+// //                 map.insert(file, error);
+// //             }
+// //         }).detach();
+// //     }
+// // }

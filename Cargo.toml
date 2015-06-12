@@ -3,4 +3,5 @@ name = "asset_store"
 version = "0.0.1"
 authors = ["Ty Overby <ty@pre-alpha.com>"]
 
-[dependencies]
+[dependencies.resources_package]
+git = "https://github.com/tomaka/rust-package.git"
