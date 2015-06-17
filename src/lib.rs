@@ -13,7 +13,7 @@ pub use iostore::{
 };
 
 // pub use multi_store::MultiStore;
-// pub use static_store::StaticStore;
+pub use static_store::StaticStore;
 
 use std::io::Error as IoError;
 
@@ -29,6 +29,7 @@ pub enum AssetStoreError {
     FileError(IoError),
     _NoSplit, // MultiStore
     _StoreNotFound(String), // MultiStore
+    NotFound(String) // StaticStore
 }
 
 pub trait AssetStore {
