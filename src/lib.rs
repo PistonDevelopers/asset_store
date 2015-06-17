@@ -1,7 +1,7 @@
 #![feature(path_ext)]
 
-//extern crate hyper;
 extern crate resources_package_package;
+#[allow(plugin_as_library)]
 extern crate resources_package;
 
 pub use iostore::{
@@ -37,7 +37,7 @@ pub trait AssetStore {
     fn load(&self, path: &str);
     /// Tell the asset store to begin loading all resources.
     fn load_all<'a, I: Iterator<Item=&'a str>>(&self, paths: I) {
-        let mut paths = paths;
+        let paths = paths;
         for s in paths {
             self.load(s);
         }
@@ -73,7 +73,7 @@ pub trait AssetStore {
     /// Remove all these resouces from this asset store if they
     /// are loaded.
     fn unload_all<'a, I: Iterator<Item=&'a str>>(&self, paths: I) {
-        let mut paths = paths;
+        let paths = paths;
         for p in paths {
             self.unload(p);
         }

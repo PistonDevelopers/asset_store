@@ -3,9 +3,11 @@ use std::convert::From;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::fs::File;
+#[allow(unused_imports)]
 use std::path::{self, Path, PathBuf};
 use std::string::String;
 use std::sync::{Arc, RwLock};
+#[allow(unused_imports)]
 use std::thread::{self, spawn, sleep_ms};
 
 use std::io::Error as IoError;
@@ -135,8 +137,7 @@ impl FsBackend {
             );
         }
 
-        let mut file = File::open(&base);
-        match file {
+        match File::open(&base) {
             Ok(mut f) => {
                 let mut buf: Vec<u8> = Vec::new();
                 match f.read_to_end(&mut buf) {
