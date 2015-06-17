@@ -6,7 +6,7 @@
 //     NotFound(String)
 // }
 
-// #[derive(Copy)]
+// #[derive(Clone, Copy)]
 // pub struct StaticStore {
 //     mem: &'static Package,
 // }

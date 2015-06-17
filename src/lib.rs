@@ -1,7 +1,8 @@
 #![feature(path_ext)]
 
 //extern crate hyper;
-// extern crate resources_package;
+extern crate resources_package_package;
+extern crate resources_package;
 
 pub use iostore::{
     IoStore,
@@ -11,24 +12,26 @@ pub use iostore::{
     //from_url,
 };
 
-// pub use multi_store::{
-//     MultiStore,
-//     MultiStoreError,
-// };
-// pub use static_store::{
-//     StaticStore,
-//     StaticStoreError
-// };
+// pub use multi_store::MultiStore;
+// pub use static_store::StaticStore;
 
+use std::io::Error as IoError;
 
 mod multi_store;
 mod iostore;
-// mod static_store;
+mod static_store;
 
 // #[cfg(test)]
 // mod test;
 
-pub trait AssetStore<E> {
+#[derive(Debug)]
+pub enum AssetStoreError {
+    FileError(IoError),
+    _NoSplit, // MultiStore
+    _StoreNotFound(String), // MultiStore
+}
+
+pub trait AssetStore {
     /// Tell the asset store to begin loading a resource.
     fn load(&self, path: &str);
     /// Tell the asset store to begin loading all resources.
@@ -40,11 +43,11 @@ pub trait AssetStore<E> {
     }
 
     /// Check to see if a resource has been loaded or not.
-    fn is_loaded(&self, path: &str) -> Result<bool, E>;
+    fn is_loaded(&self, path: &str) -> Result<bool, AssetStoreError>;
     /// Check to see if everything has been loaded.
     fn all_loaded<'a, I: Iterator<Item=&'a str>>(&self, paths: I) ->
-    Result<bool, Vec<(&'a str, E)>> {
-        let mut paths = paths;
+    Result<bool, Vec<(&'a str, AssetStoreError)>> {
+        let paths = paths;
         let mut status = true;
         let mut errs = vec![];
         for p in paths {
@@ -85,12 +88,12 @@ pub trait AssetStore<E> {
     /// is the result of the transformation.
     /// Returns Ok(None) if the resource is not yet loaded.
     /// Returns Err(e) if the resource failed to open with an error.
-    fn map_resource<O, F>(&self , path: &str, mapfn: F) -> Result<Option<O>, E>
+    fn map_resource<O, F>(&self , path: &str, mapfn: F) -> Result<Option<O>, AssetStoreError>
         where F: Fn(&[u8]) -> O;
 
     /// See `map_resource`.  This function blocks on read, so the only
     /// possible return values are `Ok(value)`, or `Err(e)`.
-    fn map_resource_block<O, F>(&self , path: &str, mapfn: F) -> Result<O, E>
+    fn map_resource_block<O, F>(&self , path: &str, mapfn: F) -> Result<O, AssetStoreError>
         where F: Fn(&[u8]) -> O;
 
     /// Similar to map_resource, the user provides a path and a
@@ -100,13 +103,13 @@ pub trait AssetStore<E> {
     /// map_resource, but with the uint `()` value in place of
     /// a mapped value.
     fn with_bytes<F>(&self, path:&str, with_fn: F) ->
-    Result<Option<()>, E> where F: Fn(&[u8]) -> () {
+    Result<Option<()>, AssetStoreError> where F: Fn(&[u8]) -> () {
         self.map_resource(path, with_fn)
     }
 
     /// The same as `with_bytes_block` but blocking.
     fn with_bytes_block<F>(&self, path:&str, with_fn: F) ->
-    Result<(), E> where F: Fn(&[u8]) -> () {
+    Result<(), AssetStoreError> where F: Fn(&[u8]) -> () {
         self.map_resource_block(path, with_fn)
     }
 }

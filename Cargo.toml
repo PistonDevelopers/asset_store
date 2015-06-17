@@ -1,7 +1,10 @@
 [package]
 name = "asset_store"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Ty Overby <ty@pre-alpha.com>"]
 
+
 [dependencies.resources_package]
-git = "https://github.com/tomaka/rust-package.git"
+git = "https://github.com/pataroose/rust-package.git"
+[dependencies.resources_package_package]
+git = "https://github.com/pataroose/rust-package.git"

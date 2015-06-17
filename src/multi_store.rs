@@ -1,106 +1,27 @@
-use std::collections::HashMap;
-use std::marker::PhantomData;
+// use std::collections::HashMap;
 
-use super::AssetStore;
-pub use self::MultiStoreError::*;
+// use super::{AssetStore, AssetStoreError};
+// use super::AssetStoreError::*;
 
-#[derive(Debug)]
-pub enum MultiStoreError<E> {
-    NoSplit,
-    StoreNotFound(String),
-    WrappedError(E)
-}
+// pub struct MultiStore<'a> {
+//     stores: HashMap<String, Box<&'a AssetStore>>
+// }
 
-// B = store, E = store error, T = MultiStore error, F = conversion closure from E to T
-struct StoreWrapper<B, E, T, F: Fn(E) -> T> {
-    store: B,
-    trans: F,
-    _e: PhantomData<*const E>,
-    _t: PhantomData<*const T>
-}
-
-impl <E, T, B: AssetStore<E>, F: Fn(E) -> T> StoreWrapper<B, E, T, F> {
-    fn new(st: B, tr: F) -> StoreWrapper<B, E, T, F> {
-        StoreWrapper {
-            store: st,
-            trans: tr,
-            _e: PhantomData,
-            _t: PhantomData
-        }
-    }
-}
-
-impl <E, T, B: AssetStore<E>, F: Fn(E) -> T> AssetStore<T> for StoreWrapper<B, E, T, F> {
-    fn load(&self, path: &str) {
-        self.store.load(path);
-    }
-
-    fn load_all<'a, I: Iterator<Item=&'a str>>(&self, paths: I) {
-        self.store.load_all(paths);
-    }
-
-    fn is_loaded(&self, path: &str) -> Result<bool, T> {
-        self.store.is_loaded(path).map_err(|e| (self.trans)(e))
-    }
-
-    fn all_loaded<'a, I: Iterator<Item=&'a str>>(&self, paths: I) -> Result<bool, Vec<(&'a str, T)>> {
-        let res = self.store.all_loaded(paths);
-        match res {
-            Ok(b) => Ok(b),
-            Err(errs) =>
-                Err(errs
-                    .into_iter()
-                    .map(|(n, e)| (n, (self.trans)(e)))
-                    .collect())
-        }
-    }
-
-    fn unload(&self, path: &str) {
-        self.store.unload(path);
-    }
-
-    fn unload_all<'a, I: Iterator<Item=&'a str>>(&self, paths: I) {
-        self.store.unload_all(paths);
-    }
-
-    fn unload_everything(&self) {
-        self.store.unload_everything();
-    }
-
-    fn map_resource<O, M>(&self , path: &str, mapfn: M) -> Result<Option<O>, T>
-        where M: Fn(&[u8]) -> O {
-
-            self.store.map_resource(path, mapfn).map_err(|x| (self.trans)(x))
-    }
-
-    fn map_resource_block<O, M>(&self, path: &str, mapfn: M) -> Result<O, T>
-        where M: Fn(&[u8]) -> O {
-
-        self.store.map_resource_block(path, mapfn).map_err(|x| (self.trans)(x))
-    }
-}
-
-pub struct MultiStore<T> {
-    stores: HashMap<String, Box<AssetStore<T>>>
-}
-
-// impl<T: 'static> MultiStore<T> {
-//     pub fn new() -> MultiStore<T> {
+// impl<'a> MultiStore<'a> {
+//     pub fn new() -> MultiStore {
 //         MultiStore { stores: HashMap::new() }
 //     }
 
-//     pub fn add<E, S: 'static + AssetStore<E>>(
+//     pub fn add<E, S: AssetStore>(
 //         &mut self,
 //         prefix: &str,
-//         store: S,
-//         tr: fn(E) -> T
+//         store: S
 //     ) {
-//         let wrapped = StoreWrapper::new(store, tr);
-//         self.stores.insert(prefix.to_string(), Box::new(wrapped));
+//         self.stores.insert(prefix.to_string(), Box::new(store));
 //     }
 
 //     fn get_store<'a>(&self, path: &'a str) ->
-//     Result<(&Box<AssetStore<T> + 'static>, &'a str), MultiStoreError<T>> {
+//     Result<(&Box<AssetStore>, &'a str), AssetStoreError> {
 //         let split: Vec<&str> = path.splitn(1, ':').collect();
 //         if split.len() == 1 {
 //             return Err(NoSplit)
