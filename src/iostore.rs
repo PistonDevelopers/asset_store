@@ -3,12 +3,10 @@ use std::convert::From;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::fs::File;
-#[allow(unused_imports)]
-use std::path::{self, Path, PathBuf};
+#[allow(unused_imports)] use std::path::{self, Path, PathBuf};
 use std::string::String;
 use std::sync::{Arc, RwLock};
-#[allow(unused_imports)]
-use std::thread::{self, spawn, sleep_ms};
+#[allow(unused_imports)] use std::thread::{self, spawn, sleep_ms};
 
 use std::io::Error as IoError;
 use std::io::Result as IoResult;
@@ -19,7 +17,7 @@ use std::io::Result as IoResult;
 // use hyper::status::StatusCode;
 
 
-use super::{AssetStore, AssetStoreError};
+use super::AssetStore;
 
 type DistMap = Arc<RwLock<HashMap<String, IoResult<Vec<u8>>>>>;
 pub trait IoBackend {
@@ -41,7 +39,7 @@ pub fn from_directory(path: &str) -> IoStore<FsBackend> {
     }
 }
 
-impl <B: IoBackend> AssetStore for IoStore<B> {
+impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
     fn load(&self, path: &str) {
         //if !self.awaiting.contains_equiv(&path) {
             self.backend.go_get(path, self.mem.clone());
@@ -49,15 +47,15 @@ impl <B: IoBackend> AssetStore for IoStore<B> {
         //self.awaiting.insert(path.to_string());
     }
 
-    fn is_loaded(&self, path: &str) -> Result<bool, AssetStoreError> {
+    fn is_loaded(&self, path: &str) -> Result<bool, IoError> {
         let mem = match self.mem.read() {
             Ok(mem) => { mem },
-            Err(_) => { return Err(AssetStoreError::FileError(IoError::new(ErrorKind::Other, "Poisoned thread"))); }
+            Err(_) => { return Err(IoError::new(ErrorKind::Other, "Poisoned thread")); }
         };
 
         match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
-            Some(&Err(ref e)) => Err(AssetStoreError::FileError(IoError::new(e.kind(), e.description().clone()))),
+            Some(&Err(ref e)) => Err(IoError::new(e.kind(), e.description().clone())),
             None => Ok(false)
         }
         // Ok(true)
@@ -78,22 +76,22 @@ impl <B: IoBackend> AssetStore for IoStore<B> {
     }
 
     fn map_resource<O, F>(&self , path: &str, mapfn: F) ->
-    Result<Option<O>, AssetStoreError> where F: Fn(&[u8]) -> O {
+    Result<Option<O>, IoError> where F: Fn(&[u8]) -> O {
 
         let mem = match self.mem.read() {
             Ok(mem) => { mem },
-            Err(_) => { return Err(AssetStoreError::FileError(IoError::new(ErrorKind::Other, "Poisoned thread"))); }
+            Err(_) => { return Err(IoError::new(ErrorKind::Other, "Poisoned thread")); }
         };
 
         match mem.get(path) {
             Some(&Ok(ref v)) => Ok(Some((mapfn)(&v[..]))),
-            Some(&Err(ref e)) => Err(AssetStoreError::FileError(IoError::new(e.kind(), e.description().clone()))),
+            Some(&Err(ref e)) => Err(IoError::new(e.kind(), e.description().clone())),
             None => Ok(None)
         }
     }
 
     fn map_resource_block<O, F>(&self , path: &str, mapfn: F) ->
-    Result<O, AssetStoreError> where F: Fn(&[u8]) -> O {
+    IoResult<O> where F: Fn(&[u8]) -> O {
         self.load(path);
         loop {
             {

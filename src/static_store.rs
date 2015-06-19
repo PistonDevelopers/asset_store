@@ -1,9 +1,13 @@
 use resources_package_package::Package;
-use super::{AssetStore, AssetStoreError};
+use super::AssetStore;
 
 use std::path::Path;
 
-#[derive(Clone, Copy)]
+#[derive(Debug)]
+pub enum StaticStoreError {
+    NotFound(String)
+}
+
 pub struct StaticStore {
     mem: &'static Package,
 }
@@ -22,10 +26,10 @@ impl StaticStore {
     }
 }
 
-impl AssetStore for StaticStore {
+impl AssetStore<StaticStoreError> for StaticStore {
     fn load(&self, _: &str) { }
 
-    fn is_loaded(&self, path: &str) -> Result<bool, AssetStoreError> {
+    fn is_loaded(&self, path: &str) -> Result<bool, StaticStoreError> {
         Ok(self.find(path).is_some())
     }
 
@@ -33,16 +37,16 @@ impl AssetStore for StaticStore {
 
     fn unload_everything(&self) { }
 
-    fn map_resource<O, F>(&self , path: &str, mapfn: F) -> Result<Option<O>, AssetStoreError>
+    fn map_resource<O, F>(&self , path: &str, mapfn: F) -> Result<Option<O>, StaticStoreError>
         where F : Fn(&[u8]) -> O {
 
         match self.find(path) {
             Some(x) => Ok(Some(mapfn(x))),
-            None => Err(AssetStoreError::NotFound(path.to_string()))
+            None => Err(StaticStoreError::NotFound(path.to_string()))
         }
     }
 
-    fn map_resource_block<O, F>(&self, path: &str, mapfn: F) -> Result<O, AssetStoreError>
+    fn map_resource_block<O, F>(&self, path: &str, mapfn: F) -> Result<O, StaticStoreError>
         where F : Fn(&[u8]) -> O {
 
         match self.map_resource(path, mapfn) {
