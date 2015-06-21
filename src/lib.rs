@@ -12,10 +12,10 @@ pub use iostore::{
     //from_url,
 };
 
-pub use multi_store::{
-    MultiStore,
-    MultiStoreError,
-};
+// pub use multi_store::{
+//     MultiStore,
+//     MultiStoreError,
+// };
 pub use static_store::{
     StaticStore,
     StaticStoreError

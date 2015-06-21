@@ -18,11 +18,7 @@ impl StaticStore {
     }
 
     fn find(&self, path: &str) -> Option<&[u8]> {
-        // this match is necessary in order to avoid a compilation error
-        match self.mem.find(&Path::new(path)) {
-            Some(val) => Some(val),
-            None => None
-        }
+        self.mem.find(&Path::new(path))
     }
 }
 
