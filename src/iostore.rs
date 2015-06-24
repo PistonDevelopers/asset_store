@@ -51,7 +51,10 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
     }
 
     fn is_loaded(&self, path: &str) -> Result<bool, io::Error> {
-        let mem = self.mem.read();
+        let mem = match self.mem.read() {
+                Ok(mem) => { mem },
+                Err(_) => { return Err(io::Error::new(io::ErrorKind::Other, "Poisoned")); }
+            };
         match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
             Some(&Err(ref e)) => Err(e.clone()),
@@ -104,7 +107,9 @@ pub struct FsBackend {
 }
 
 impl FsBackend {
-    fn process(path: Path, file: String) -> (String, io::Result<Vec<u8>>) {
+    fn process<P>(path: P, file: String) -> (String, io::Result<Vec<u8>>)
+        where P: AsRef<Path>
+    {
         let mut base = path.clone();
         base.push(file.clone());
 
