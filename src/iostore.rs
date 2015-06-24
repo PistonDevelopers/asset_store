@@ -67,8 +67,10 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
         mem.clear();
     }
 
-    fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
-    IoResult<Option<O>> {
+    fn map_resource<F, O>(&self, path: &str, mapfn: F)
+    -> IoResult<Option<O>>
+        where F: FnOnce(&[u8]) -> O
+    {
         let mem = self.mem.read();
         match mem.get(path) {
             Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
@@ -77,8 +79,10 @@ impl <B: IoBackend> AssetStore<IoError> for IoStore<B> {
         }
     }
 
-    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O)
-    -> IoResult<O> {
+    fn map_resource_block<F, O>(&self, path: &str, mapfn: F)
+    -> IoResult<O>
+        where F: FnOnce(&[u8]) -> O
+    {
         self.load(path);
         loop {
             {
