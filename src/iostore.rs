@@ -107,27 +107,40 @@ pub struct FsBackend {
 }
 
 impl FsBackend {
-    fn process<P>(path: P, file: String) -> (String, io::Result<Vec<u8>>)
-        where P: Into<PathBuf>
-    {
-        let mut base = path.into();
-        base.push(file.clone());
+    fn process<P: AsRef<Path>>(path: P, filen: String) -> (String, io::Result<Vec<u8>>) {
+        use std::fs::PathExt;
+        use std::io::Read;
 
-        if !path.is_ancestor_of(&base) {
-            let detail = format!("{} is not a child of {}",
-                                 base.display(), path.display());
+        let mut base = path.as_ref().to_path_buf();
+        base.push(filen.clone());
+
+        // is the path valid?
+        if !base.exists() {
             return (
-                file,
+                filen.clone(),
                 Err(
-                    io::Error {
-                        kind: io::ErrorKind::PermissionDenied,
-                        desc: "Attempt to escape filestore sandbox",
-                        detail: Some(detail)
-                    }
+                    io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("Given path does not exist: {} does not contain {}", match path.as_ref().to_str() {
+                            Some(s) => { s },
+                            None => { "{Bad Path}"}
+                        }, filen)
+                    )
                 )
             );
         }
-        (file, File::open(&base).read_to_end())
+
+        let mut file = File::open(&base);
+        match file {
+            Ok(mut f) => {
+                let mut buf: Vec<u8> = Vec::new();
+                match f.read_to_end(&mut buf) {
+                    Ok(_) => { (filen, Ok(buf)) }
+                    Err(e) => { (filen, Err(e)) }
+                }
+            },
+            Err(e) => { (filen, Err(e)) }
+        }
     }
 }
 
