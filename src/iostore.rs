@@ -72,14 +72,18 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
         mem.clear();
     }
 
-    fn map_resource<F, O>(&self, path: &str, mapfn: F)
+    fn map_resource<F, O>(&self , path: &str, mapfn: F)
     -> io::Result<Option<O>>
         where F: FnOnce(&[u8]) -> O
     {
-        let mem = self.mem.read();
+        let mem = match self.mem.read() {
+            Ok(mem) => { mem },
+            Err(_) => { return Err(io::Error::new(io::ErrorKind::Other, "Poisoned")); }
+        };
+
         match mem.get(path) {
-            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v))),
-            Some(&Err(ref e)) => Err(e.clone()),
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v[..]))),
+            Some(&Err(ref e)) => Err(io::Error::new(e.kind(), e.description().clone())),
             None => Ok(None)
         }
     }
@@ -107,27 +111,40 @@ pub struct FsBackend {
 }
 
 impl FsBackend {
-    fn process<P>(path: P, file: String) -> (String, io::Result<Vec<u8>>)
-        where P: Into<PathBuf>
-    {
-        let mut base = path.into();
-        base.push(file.clone());
+    fn process<P: AsRef<Path>>(path: P, filen: String) -> (String, io::Result<Vec<u8>>) {
+        use std::fs::PathExt;
+        use std::io::Read;
 
-        if !path.is_ancestor_of(&base) {
-            let detail = format!("{} is not a child of {}",
-                                 base.display(), path.display());
+        let mut base = path.as_ref().to_path_buf();
+        base.push(filen.clone());
+
+        // is the path valid?
+        if !base.exists() {
             return (
-                file,
+                filen.clone(),
                 Err(
-                    io::Error {
-                        kind: io::ErrorKind::PermissionDenied,
-                        desc: "Attempt to escape filestore sandbox",
-                        detail: Some(detail)
-                    }
+                    io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("Given path does not exist: {} does not contain {}", match path.as_ref().to_str() {
+                            Some(s) => { s },
+                            None => { "{Bad Path}"}
+                        }, filen)
+                    )
                 )
             );
         }
-        (file, File::open(&base).read_to_end())
+
+        let mut file = File::open(&base);
+        match file {
+            Ok(mut f) => {
+                let mut buf: Vec<u8> = Vec::new();
+                match f.read_to_end(&mut buf) {
+                    Ok(_) => { (filen, Ok(buf)) }
+                    Err(e) => { (filen, Err(e)) }
+                }
+            },
+            Err(e) => { (filen, Err(e)) }
+        }
     }
 }
 
@@ -171,11 +188,10 @@ impl IoBackend for NetBackend {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
-                    let error = Err(io::Error {
-                        kind: io::ErrorKind::Other,
-                        desc: "Error fetching file over http",
-                        detail: Some(format!("for file {}: {}", path, err))
-                    });
+                    let error = Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Error fetching file over http {}: {}", path, err)
+                    ));
                     let mut map = mem.write();
                     map.insert(file, error);
                     return;
