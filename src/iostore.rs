@@ -108,9 +108,9 @@ pub struct FsBackend {
 
 impl FsBackend {
     fn process<P>(path: P, file: String) -> (String, io::Result<Vec<u8>>)
-        where P: AsRef<Path>
+        where P: Into<PathBuf>
     {
-        let mut base = path.clone();
+        let mut base = path.into();
         base.push(file.clone());
 
         if !path.is_ancestor_of(&base) {
