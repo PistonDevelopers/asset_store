@@ -195,7 +195,7 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
 
     fn map_resource_block<F, O>(&self, path: &str, mapfn: F)
     -> Result<O, MultiStoreError<T>>
-        where F: FnOne(&[u8]) -> O
+        where F: FnOnce(&[u8]) -> O
     {
         let (store, path) = try!(self.get_store(path));
         let mut ret = None;
