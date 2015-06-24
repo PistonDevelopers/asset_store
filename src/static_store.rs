@@ -1,3 +1,4 @@
+use std::path::Path;
 use resources_package_package::Package;
 use super::AssetStore;
 
