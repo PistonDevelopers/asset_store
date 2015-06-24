@@ -1,13 +1,13 @@
-use std::path::Path;
 use resources_package_package::Package;
 use super::AssetStore;
+
+use std::path::Path;
 
 #[derive(Debug)]
 pub enum StaticStoreError {
     NotFound(String)
 }
 
-#[derive(Copy, Clone)]
 pub struct StaticStore {
     mem: &'static Package,
 }
@@ -18,11 +18,7 @@ impl StaticStore {
     }
 
     fn find(&self, path: &str) -> Option<&[u8]> {
-        // this match is necessary in order to avoid a compilation error
-        match self.mem.find(&Path::new(path)) {
-            Some(val) => Some(val),
-            None => None
-        }
+        self.mem.find(&Path::new(path))
     }
 }
 
@@ -37,20 +33,18 @@ impl AssetStore<StaticStoreError> for StaticStore {
 
     fn unload_everything(&self) { }
 
-    fn map_resource<F, O>(&self , path: &str, mapfn: F)
-    -> Result<Option<O>, StaticStoreError>
-        where F: FnOnce(&[u8]) -> O
-    {
+    fn map_resource<O, F>(&self , path: &str, mapfn: F) -> Result<Option<O>, StaticStoreError>
+        where F : Fn(&[u8]) -> O {
+
         match self.find(path) {
             Some(x) => Ok(Some(mapfn(x))),
             None => Err(StaticStoreError::NotFound(path.to_string()))
         }
     }
 
-    fn map_resource_block<F, O>(&self, path: &str, mapfn: F)
-    -> Result<O, StaticStoreError>
-        where F: FnOnce(&[u8]) -> O
-    {
+    fn map_resource_block<O, F>(&self, path: &str, mapfn: F) -> Result<O, StaticStoreError>
+        where F : Fn(&[u8]) -> O {
+
         match self.map_resource(path, mapfn) {
             Ok(Some(x)) => Ok(x),
             Ok(None) => unreachable!(),
