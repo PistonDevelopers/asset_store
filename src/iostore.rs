@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{ Path, PathBuf };
 use std::fs::File;
 use std::collections::HashMap;
 use std::thread::sleep_ms;
@@ -25,8 +25,8 @@ pub struct IoStore<Backend> {
     //awaiting: HashSet<String>
 }
 
-pub fn from_directory<P: AsRef<Path>>(path: P) -> IoStore<FsBackend> {
-    let path: Path = path.as_ref();
+pub fn from_directory<P: Into<PathBuf>>(path: P) -> IoStore<FsBackend> {
+    let path: PathBuf = path.into();
     IoStore {
         backend: FsBackend { path: path },
         mem: Arc::new(RwLock::new(HashMap::new())),
@@ -100,7 +100,7 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
 }
 
 pub struct FsBackend {
-    path: Path,
+    path: PathBuf,
 }
 
 impl FsBackend {
