@@ -7,6 +7,9 @@ use std::fs::File;
 use std::string::String;
 use std::sync::{Arc, RwLock};
 #[allow(unused_imports)] use std::thread::{self, spawn, sleep_ms};
+use hyper::client::{Client, Response};
+use hyper::status::StatusCode;
+use hyper::Url;
 
 use std::io::Error as IoError;
 use std::io::Result as IoResult;
@@ -161,66 +164,68 @@ impl IoBackend for FsBackend {
     }
 }
 
-// pub fn from_url(base: &str) -> IoStore<NetBackend> {
-//     IoStore {
-//         backend: NetBackend { base: base.to_string() },
-//         mem: Arc::new(RwLock::new(HashMap::new())),
-//         //awaiting: HashSet::new(),
-//     }
-// }
+pub fn from_url(base: &str) -> IoStore<NetBackend> {
+    IoStore {
+        backend: NetBackend { base: base.to_string() },
+        mem: Arc::new(RwLock::new(HashMap::new())),
+        //awaiting: HashSet::new(),
+    }
+}
 
-// // pub struct NetBackend {
-// //     base: String
-// // }
+pub struct NetBackend {
+    base: String
+}
 
-// // impl NetBackend {
-// //     fn http_get(path: &String) -> Result<Response, String> {
-// //         let url = match Url::parse(path.as_slice()) {
-// //             Ok(url) => url,
-// //             Err(parse_err) => return Err(
-// //                 format!("Error parsing url: {}", parse_err)
-// //             ),
-// //         };
+impl NetBackend {
+    fn http_get(path: &String) -> Result<Response, String> {
+        let url = match Url::parse(&path) {
+            Ok(url) => url,
+            Err(parse_err) => return Err(
+                format!("Error parsing url: {}", parse_err)
+            ),
+        };
 
-// //         let mut client = Client::new();
-// //         let request = client.get(url);
+        let mut client = Client::new();
+        let request = client.get(url);
 
-// //         request.send().map_err(|e| e.to_string())
-// //     }
-// // }
+        request.send().map_err(|e| e.to_string())
+    }
+}
 
-// // impl IoBackend for NetBackend {
-// //     fn go_get(&self, file: &str, mem: DistMap) {
-// //         let path = vec![self.base.clone(), file.to_string()].concat();
-// //         let file = file.to_string();
-// //         Thread::spawn(move || {
-// //             let mut res = match NetBackend::http_get(&path) {
-// //                 Ok(res) => res,
-// //                 Err(err) => {
-// //                     let error = Err(IoError {
-// //                         kind: OtherIoError,
-// //                         desc: "Error fetching file over http",
-// //                         detail: Some(format!("for file {}: {}", path, err))
-// //                     });
-// //                     let mut map = mem.write();
-// //                     map.insert(file, error);
-// //                     return;
-// //                 }
-// //             };
+impl IoBackend for NetBackend {
+    fn go_get(&self, file: &str, mem: DistMap) {
+        use std::io::Read;
 
-// //             if res.status == StatusCode::Ok {
-// //                 let mut map = mem.write();
-// //                 map.insert(file, res.read_to_end());
-// //             } else {
-// //                 let error = Err(IoError {
-// //                         kind: OtherIoError,
-// //                         desc: "Error fetching file over http",
-// //                         detail: Some(format!("for file {}: {}", path, res.status))
-// //                 });
-// //                 let mut map = mem.write();
-// //                 map.insert(file, error);
-// //             }
-// //         }).detach();
-// //     }
-// // }
+        let path = vec![self.base.clone(), file.to_string()].concat();
+        let file = file.to_string();
+        spawn(move || {
+            let mut res = match NetBackend::http_get(&path) {
+                Ok(res) => res,
+                Err(err) => {
+                    let error = Err(IoError::new(
+                        ErrorKind::Other,
+                        format!("Error fetching file over http {}: {}", path, err)
+                    ));
+                    let mut map = mem.write().unwrap();
+                    map.insert(file, error);
+                    return;
+                }
+            };
+
+            if res.status == StatusCode::Ok {
+                let mut map = mem.write().unwrap();
+                let mut data = vec![];
+                let res = res.read_to_end(&mut data);
+                map.insert(file, res.map(|_| data));
+            } else {
+                let error = Err(IoError::new(
+                    ErrorKind::Other,
+                    format!("Error fetching file over http {}: {}", path, res.status)
+                ));
+                let mut map = mem.write().unwrap();
+                map.insert(file, error);
+            }
+        });
+    }
+}
 
