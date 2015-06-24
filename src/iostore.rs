@@ -78,7 +78,7 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
     {
         let mem = self.mem.read();
         match mem.get(path) {
-            Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v))),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)
         }
@@ -149,7 +149,7 @@ pub struct NetBackend {
 
 impl NetBackend {
     fn http_get(path: &String) -> Result<Response, String> {
-        let url = match Url::parse(path.as_slice()) {
+        let url = match Url::parse(path) {
             Ok(url) => url,
             Err(parse_err) => return Err(
                 format!("Error parsing url: {}", parse_err)
