@@ -25,8 +25,8 @@ pub struct IoStore<Backend> {
     //awaiting: HashSet<String>
 }
 
-pub fn from_directory(path: &str) -> IoStore<FsBackend> {
-    let path = Path::new(path);
+pub fn from_directory<P: AsRef<Path>>(path: P) -> IoStore<FsBackend> {
+    let path: Path = path.as_ref();
     IoStore {
         backend: FsBackend { path: path },
         mem: Arc::new(RwLock::new(HashMap::new())),

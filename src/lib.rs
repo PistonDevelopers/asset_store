@@ -32,7 +32,9 @@ pub trait AssetStore<E> {
     /// Tell the asset store to begin loading a resource.
     fn load(&self, path: &str);
     /// Tell the asset store to begin loading all resources.
-    fn load_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn load_all<'a, I>(&self, paths: I)
+        where I: Iterator<Item = &'a str>
+    {
         let mut paths = paths;
         for s in paths {
             self.load(s);
@@ -42,8 +44,9 @@ pub trait AssetStore<E> {
     /// Check to see if a resource has been loaded or not.
     fn is_loaded(&self, path: &str) -> Result<bool, E>;
     /// Check to see if everything has been loaded.
-    fn all_loaded<'a, I: Iterator<&'a str>>(&self, paths: I) ->
-    Result<bool, Vec<(&'a str, E)>> {
+    fn all_loaded<'a, I>(&self, paths: I) -> Result<bool, Vec<(&'a str, E)>>
+        where I: Iterator<Item = &'a str>
+    {
         let mut paths = paths;
         let mut status = true;
         let mut errs = vec![];
@@ -68,7 +71,7 @@ pub trait AssetStore<E> {
     fn unload(&self, path: &str);
     /// Remove all these resouces from this asset store if they
     /// are loaded.
-    fn unload_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn unload_all<'a, I: Iterator<Item = &'a str>>(&self, paths: I) {
         let mut paths = paths;
         for p in paths {
             self.unload(p);
