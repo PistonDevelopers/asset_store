@@ -1,12 +1,12 @@
 use resources_package_package::Package;
 use super::AssetStore;
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub enum StaticStoreError {
     NotFound(String)
 }
 
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct StaticStore {
     mem: &'static Package,
 }
@@ -36,14 +36,20 @@ impl AssetStore<StaticStoreError> for StaticStore {
 
     fn unload_everything(&self) { }
 
-    fn map_resource<O>(&self , path: &str, mapfn: |&[u8]| -> O) -> Result<Option<O>, StaticStoreError> {
+    fn map_resource<F, O>(&self , path: &str, mapfn: F)
+    -> Result<Option<O>, StaticStoreError>
+        where F: FnOnce(&[u8]) -> O
+    {
         match self.find(path) {
             Some(x) => Ok(Some(mapfn(x))),
             None => Err(StaticStoreError::NotFound(path.to_string()))
         }
     }
 
-    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<O, StaticStoreError> {
+    fn map_resource_block<F, O>(&self, path: &str, mapfn: F)
+    -> Result<O, StaticStoreError>
+        where F: FnOnce(&[u8]) -> O
+    {
         match self.map_resource(path, mapfn) {
             Ok(Some(x)) => Ok(x),
             Ok(None) => unreachable!(),

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::AssetStore;
 pub use self::MultiStoreError::*;
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub enum MultiStoreError<E> {
     NoSplit,
     StoreNotFound(String),
@@ -58,11 +58,15 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         self.store.unload_everything();
     }
 
-    fn map_resource<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<Option<O>, T> {
+    fn map_resource<F, O>(&self, path: &str, mapfn: F) -> Result<Option<O>, T>
+        where F: FnOnce(&[u8]) -> O
+    {
         self.store.map_resource(path, mapfn).map_err(|x| (self.trans)(x))
     }
 
-    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) -> Result<O, T> {
+    fn map_resource_block<F, O>(&self, path: &str, mapfn: F) -> Result<O, T>
+        where F: FnOnce(&[u8]) -> O
+    {
         self.store.map_resource_block(path, mapfn).map_err(|x| (self.trans)(x))
     }
 }
@@ -83,7 +87,7 @@ impl<T: 'static> MultiStore<T> {
         tr: fn(E) -> T
     ) {
         let wrapped = StoreWrapper::new(store, tr);
-        self.stores.insert(prefix.to_string(), box wrapped);
+        self.stores.insert(prefix.to_string(), Box::new(wrapped));
     }
 
     fn get_store<'a>(&self, path: &'a str) ->
@@ -172,8 +176,10 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn map_resource<O>(&self , path: &str, mapfn: |&[u8]| -> O) ->
-    Result<Option<O>, MultiStoreError<T>> {
+    fn map_resource<F, O>(&self , path: &str, mapfn: F)
+    -> Result<Option<O>, MultiStoreError<T>>
+        where F: FnOnce(&[u8]) -> O
+    {
         let (store, path) = try!(self.get_store(path));
         let mut ret = None;
         let out = store.with_bytes(path, |bytes| {
@@ -187,8 +193,10 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn map_resource_block<O>(&self, path: &str, mapfn: |&[u8]| -> O) ->
-    Result<O, MultiStoreError<T>> {
+    fn map_resource_block<F, O>(&self, path: &str, mapfn: F)
+    -> Result<O, MultiStoreError<T>>
+        where F: FnOne(&[u8]) -> O
+    {
         let (store, path) = try!(self.get_store(path));
         let mut ret = None;
         let out = store.with_bytes_block(path, |bytes| {
