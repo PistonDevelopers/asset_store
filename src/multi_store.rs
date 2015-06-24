@@ -26,7 +26,9 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         self.store.load(path);
     }
 
-    fn load_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn load_all<'a, I>(&self, paths: I)
+        where I: Iterator<Item = &'a str>
+    {
         self.store.load_all(paths);
     }
 
@@ -34,7 +36,9 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         self.store.is_loaded(path).map_err(|e| (self.trans)(e))
     }
 
-    fn all_loaded<'a, I: Iterator<&'a str>>(&self, paths: I) -> Result<bool, Vec<(&'a str, T)>> {
+    fn all_loaded<'a, I>(&self, paths: I) -> Result<bool, Vec<(&'a str, T)>>
+        where I: Iterator<Item = &'a str>
+    {
         let res = self.store.all_loaded(paths);
         match res {
             Ok(b) => Ok(b),
@@ -50,7 +54,9 @@ impl <E, T, B: AssetStore<E>> AssetStore<T> for StoreWrapper<B, E, T> {
         self.store.unload(path);
     }
 
-    fn unload_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn unload_all<'a, I>(&self, paths: I)
+        where I: Iterator<Item = &'a str>
+    {
         self.store.unload_all(paths);
     }
 
@@ -112,7 +118,9 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn load_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn load_all<'a, I>(&self, paths: I)
+        where I: Iterator<Item = &'a str>
+    {
         let mut paths = paths;
         for path in paths {
             match self.get_store(path) {
@@ -127,7 +135,10 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         store.is_loaded(path).map_err(|e| WrappedError(e))
     }
 
-    fn all_loaded<'a, I: Iterator<&'a str>>(&self, paths: I) -> Result<bool, Vec<(&'a str, MultiStoreError<T>)>> {
+    fn all_loaded<'a, I>(&self, paths: I)
+    -> Result<bool, Vec<(&'a str, MultiStoreError<T>)>>
+        where I: Iterator<Item = &'a str>
+    {
         let mut paths = paths;
         let mut errs = Vec::new();
         let mut loaded = true;
@@ -160,7 +171,9 @@ impl<T: 'static> AssetStore<MultiStoreError<T>> for MultiStore<T> {
         }
     }
 
-    fn unload_all<'a, I: Iterator<&'a str>>(&self, paths: I) {
+    fn unload_all<'a, I>(&self, paths: I)
+        where I: Iterator<Item = &'a str>
+    {
         let mut paths = paths;
         for path in paths {
             match self.get_store(path) {
