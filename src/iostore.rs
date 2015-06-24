@@ -72,14 +72,18 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
         mem.clear();
     }
 
-    fn map_resource<F, O>(&self, path: &str, mapfn: F)
+    fn map_resource<F, O>(&self , path: &str, mapfn: F)
     -> io::Result<Option<O>>
         where F: FnOnce(&[u8]) -> O
     {
-        let mem = self.mem.read();
+        let mem = match self.mem.read() {
+            Ok(mem) => { mem },
+            Err(_) => { return Err(io::Error::new(io::ErrorKind::Other, "Poisoned")); }
+        };
+
         match mem.get(path) {
-            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v))),
-            Some(&Err(ref e)) => Err(e.clone()),
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v[..]))),
+            Some(&Err(ref e)) => Err(io::Error::new(e.kind(), e.description().clone())),
             None => Ok(None)
         }
     }
