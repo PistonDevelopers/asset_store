@@ -171,11 +171,10 @@ impl IoBackend for NetBackend {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
-                    let error = Err(io::Error {
-                        kind: io::ErrorKind::Other,
-                        desc: "Error fetching file over http",
-                        detail: Some(format!("for file {}: {}", path, err))
-                    });
+                    let error = Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Error fetching file over http {}: {}", path, err)
+                    ));
                     let mut map = mem.write();
                     map.insert(file, error);
                     return;
