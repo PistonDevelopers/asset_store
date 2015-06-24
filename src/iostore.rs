@@ -1,7 +1,7 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::collections::HashMap;
-use std::thread::sleep_ms;
+use std::thread::{sleep_ms, spawn};
 use std::time::duration::Duration;
 use std::sync::{Arc, RwLock};
 use std::thread::Thread;
@@ -25,8 +25,8 @@ pub struct IoStore<Backend> {
     //awaiting: HashSet<String>
 }
 
-pub fn from_directory<P: AsRef<Path>>(path: P) -> IoStore<FsBackend> {
-    let path: Path = path.as_ref();
+pub fn from_directory<P: Into<PathBuf>>(path: P) -> IoStore<FsBackend> {
+    let path: PathBuf = path.into();
     IoStore {
         backend: FsBackend { path: path },
         mem: Arc::new(RwLock::new(HashMap::new())),
@@ -51,7 +51,10 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
     }
 
     fn is_loaded(&self, path: &str) -> Result<bool, io::Error> {
-        let mem = self.mem.read();
+        let mem = match self.mem.read() {
+                Ok(mem) => { mem },
+                Err(_) => { return Err(io::Error::new(io::ErrorKind::Other, "Poisoned")); }
+            };
         match mem.get(path) {
             Some(&Ok(_)) => Ok(true),
             Some(&Err(ref e)) => Err(e.clone()),
@@ -75,7 +78,7 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
     {
         let mem = self.mem.read();
         match mem.get(path) {
-            Some(&Ok(ref v)) => Ok(Some((mapfn)(v.as_slice()))),
+            Some(&Ok(ref v)) => Ok(Some((mapfn)(&v))),
             Some(&Err(ref e)) => Err(e.clone()),
             None => Ok(None)
         }
@@ -100,12 +103,14 @@ impl <B: IoBackend> AssetStore<io::Error> for IoStore<B> {
 }
 
 pub struct FsBackend {
-    path: Path,
+    path: PathBuf,
 }
 
 impl FsBackend {
-    fn process(path: Path, file: String) -> (String, io::Result<Vec<u8>>) {
-        let mut base = path.clone();
+    fn process<P>(path: P, file: String) -> (String, io::Result<Vec<u8>>)
+        where P: Into<PathBuf>
+    {
+        let mut base = path.into();
         base.push(file.clone());
 
         if !path.is_ancestor_of(&base) {
@@ -130,7 +135,7 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        Thread::spawn(move || {
+        spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
             let mut mem = mem.write();
             mem.insert(file, bytes);
@@ -144,7 +149,7 @@ pub struct NetBackend {
 
 impl NetBackend {
     fn http_get(path: &String) -> Result<Response, String> {
-        let url = match Url::parse(path.as_slice()) {
+        let url = match Url::parse(path) {
             Ok(url) => url,
             Err(parse_err) => return Err(
                 format!("Error parsing url: {}", parse_err)
@@ -162,7 +167,7 @@ impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
-        Thread::spawn(move || {
+        spawn(move || {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {

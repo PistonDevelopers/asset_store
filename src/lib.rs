@@ -11,17 +11,19 @@ pub use iostore::{
     from_url,
 };
 
+/*
 pub use multi_store::{
     MultiStore,
     MultiStoreError,
 };
+*/
 pub use static_store::{
     StaticStore,
     StaticStoreError
 };
 
 
-mod multi_store;
+// mod multi_store;
 mod iostore;
 mod static_store;
 
@@ -121,4 +123,3 @@ pub trait AssetStore<E> {
         self.map_resource_block(path, with_fn)
     }
 }
-
