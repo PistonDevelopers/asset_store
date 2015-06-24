@@ -4,7 +4,7 @@ use asset_store::from_url;
 use asset_store::AssetStore;
 
 fn to_string(bytes: &[u8]) -> String {
-    String::from_utf8_lossy(bytes).into_string()
+    String::from_utf8_lossy(bytes).into_owned()
 }
 
 fn main() {

@@ -3,13 +3,14 @@
 extern crate resources_package_package;
 #[allow(plugin_as_library)]
 extern crate resources_package;
+extern crate hyper;
 
 pub use iostore::{
     IoStore,
     FsBackend,
-    //NetBackend,
+    NetBackend,
     from_directory,
-    //from_url,
+    from_url,
 };
 
 // pub use multi_store::{

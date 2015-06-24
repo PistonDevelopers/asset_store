@@ -4,7 +4,7 @@ use asset_store::from_directory;
 use asset_store::AssetStore;
 
 fn to_string(bytes: &[u8]) -> String {
-    String::from_utf8_lossy(bytes).into_string()
+    String::from_utf8_lossy(bytes).into_owned()
 }
 
 fn main() {
@@ -16,5 +16,5 @@ fn main() {
     // Block until the file is loaded.
     let contents = store.map_resource_block("basic_file.rs", to_string);
     // Print the bytes of the file.
-    println!("{}", contents);
+    println!("{:?}", contents);
 }

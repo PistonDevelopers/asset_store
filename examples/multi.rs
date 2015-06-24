@@ -1,3 +1,6 @@
+fn main() {}
+
+/*
 extern crate asset_store;
 
 use asset_store::from_url;
@@ -34,3 +37,4 @@ fn main() {
     }
 
 }
+*/
