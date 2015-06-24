@@ -1,7 +1,7 @@
-use std::path::{ Path, PathBuf };
+use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::collections::HashMap;
-use std::thread::sleep_ms;
+use std::thread::{sleep_ms, spawn};
 use std::time::duration::Duration;
 use std::sync::{Arc, RwLock};
 use std::thread::Thread;
@@ -130,7 +130,7 @@ impl IoBackend for FsBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = self.path.clone();
         let file = file.to_string();
-        Thread::spawn(move || {
+        spawn(move || {
             let (file, bytes) = FsBackend::process(path, file);
             let mut mem = mem.write();
             mem.insert(file, bytes);
@@ -162,7 +162,7 @@ impl IoBackend for NetBackend {
     fn go_get(&self, file: &str, mem: DistMap) {
         let path = vec![self.base.clone(), file.to_string()].concat();
         let file = file.to_string();
-        Thread::spawn(move || {
+        spawn(move || {
             let mut res = match NetBackend::http_get(&path) {
                 Ok(res) => res,
                 Err(err) => {
