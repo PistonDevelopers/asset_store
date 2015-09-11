@@ -1,5 +1,7 @@
 # Asset Store [![Build Status](https://travis-ci.org/PistonDevelopers/asset_store.svg?branch=master)](https://travis-ci.org/PistonDevelopers/asset_store)
 
+[![Join the chat at https://gitter.im/PistonDevelopers/asset_store](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/PistonDevelopers/asset_store?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [Api Documentation](http://www.piston.rs/asset_store/asset_store/trait.AssetStore.html)
 
 A unified method for easily reading and caching files over the filesystem
